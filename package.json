@@ -1,0 +1,33 @@
+{
+  "name": "ty-data-visualization",
+  "version": "1.0.0",
+  "description": "A Node.js project for data visualization",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm server",
+    "dev": "nodemon server",
+    "lint": "eslint server.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cookie-parser": "^1.4.6",
+    "date-fns": "^2.30.0",
+    "dotenv": "^16.6.1",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "fs": "^0.0.1-security",
+    "http-errors": "^2.0.0",
+    "init": "^0.1.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^3.0.2",
+    "path": "^0.12.7",
+    "pg": "^8.16.3",
+    "sanitize-html": "^2.14.0",
+    "sequelize": "^6.37.5",
+    "winston": "^3.17.0",
+    "xlsx": "^0.18.5"
+  }
+}
