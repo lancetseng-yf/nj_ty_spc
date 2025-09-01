@@ -4,5 +4,6 @@
     "create_time": "2025/03/04 14:41:36",
     "pressure":[1,2,3],
     "position":[1,2,3],
-    "speed":[1,2,3]
+    "speed":[1,2,3],
+    "type":""
 }
