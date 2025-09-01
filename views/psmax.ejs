@@ -22,6 +22,10 @@
         margin-bottom: 10px;
         font-weight: bold;
       }
+      #stats {
+        text-align: center;
+        margin-top: 10px;
+      }
     </style>
     <link
       rel="stylesheet"
@@ -36,11 +40,12 @@
     <div id="chart"></div>
     <div id="rangeLabel"></div>
     <div id="timeSlider"></div>
+    <div id="stats"></div>
 
     <script>
       const models = <%- JSON.stringify(models) %>;
 
-      // 建立 scatterData [time(ms), speed, pressure, id]
+      // 建立資料 [time(ms), speed, pressure, id]
       const scatterData = models.map(m => [
         new Date(m.dt).getTime(),
         Number(m.max_speed),
@@ -50,7 +55,7 @@
 
       const chart = echarts.init(document.getElementById("chart"));
 
-      // 固定 XY 軸
+      // 固定 XY 軸範圍
       const speedValues = scatterData.map(d => d[1]);
       const pressureValues = scatterData.map(d => d[2]);
       const xMin = Math.min(...speedValues);
@@ -59,7 +64,6 @@
       const yMax = Math.max(...pressureValues);
 
       const optionBase = {
-        animation: false,  // 關閉動畫
         title: { text: "Scatter: Max Speed vs Max Pressure", left: "center" },
         tooltip: {
           trigger: "item",
@@ -71,14 +75,20 @@
             return `<b>ID:</b> ${id}<br/><b>Time:</b> ${timeStr}<br/><b>Speed:</b> ${speed}<br/><b>Pressure:</b> ${pressure}`;
           }
         },
-        xAxis: { type: "value", name: "Max Speed", min: 0, max: xMax, nameLocation: "middle", nameGap: 30 },
+        xAxis: { type: "value", name: "Max Speed", min: 0, max: xMax+100, nameLocation: "middle", nameGap: 30 },
         yAxis: { type: "value", name: "Max Pressure", min: 0, max: yMax+100, nameLocation: "middle", nameGap: 40 },
-        series: [{ type: "scatter", symbolSize: 10, data: scatterData }]
+        series: [{
+          type: "scatter",
+          symbolSize: 10,
+          data: scatterData,
+          encode: { x: 1, y: 2 },
+          animation: false
+        }]
       };
 
       chart.setOption(optionBase);
 
-      // 下方滑軌
+      // 下方滑軌設定
       const times = scatterData.map(d => d[0]);
       const minTime = Math.min(...times);
       const maxTime = Math.max(...times);
@@ -93,6 +103,7 @@
       });
 
       const rangeLabel = document.getElementById('rangeLabel');
+      const statsDiv = document.getElementById('stats');
 
       function formatTimeLabel(ms) {
         const d = new Date(+ms);
@@ -100,20 +111,39 @@
         return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
       }
 
-      // 滑動滑軌時更新 ECharts 數據
+      function updateStats(data) {
+        if (data.length === 0) {
+          statsDiv.textContent = "No data in this range";
+          return;
+        }
+        const speeds = data.map(d => d[1]);
+        const pressures = data.map(d => d[2]);
+        const avgSpeed = (speeds.reduce((a,b)=>a+b,0)/speeds.length).toFixed(2);
+        const avgPressure = (pressures.reduce((a,b)=>a+b,0)/pressures.length).toFixed(2);
+        const maxSpeed = Math.max(...speeds);
+        const minSpeed = Math.min(...speeds);
+        const maxPressure = Math.max(...pressures);
+        const minPressure = Math.min(...pressures);
+        statsDiv.innerHTML = `
+          <b>Data Count:</b> ${data.length} &nbsp;
+          <b>Speed:</b> min ${minSpeed}, max ${maxSpeed}, avg ${avgSpeed} &nbsp;
+          <b>Pressure:</b> min ${minPressure}, max ${maxPressure}, avg ${avgPressure}
+        `;
+      }
+
+      // 初始統計
+      updateStats(scatterData);
+
+      // 滑動滑軌時更新 ECharts 數據和統計
       slider.noUiSlider.on('update', (values) => {
         const start = Number(values[0]);
         const end = Number(values[1]);
         rangeLabel.textContent = `Time: ${formatTimeLabel(start)} ~ ${formatTimeLabel(end)}`;
         const filtered = scatterData.filter(d => d[0] >= start && d[0] <= end);
         chart.setOption({
-          series: [{
-            type: "scatter",
-            symbolSize: 10,
-            data: filtered,
-            encode: { x: 1, y: 2, tooltip: [0,1,2,3] }
-          }]
+          series: [{ data: filtered }]
         });
+        updateStats(filtered);
       });
 
       window.addEventListener("resize", () => chart.resize());
