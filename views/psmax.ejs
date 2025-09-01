@@ -43,110 +43,121 @@
     <div id="stats"></div>
 
     <script>
-      const models = <%- JSON.stringify(models) %>;
 
-      // 建立資料 [time(ms), speed, pressure, id]
-      const scatterData = models.map(m => [
-        new Date(m.dt).getTime(),
-        Number(m.max_speed),
-        Number(m.max_pressure),
-        m.diecasting_eigenvalue_data_id
-      ]);
+            const models = <%- JSON.stringify(models) %>;
 
-      const chart = echarts.init(document.getElementById("chart"));
+            
 
-      // 固定 XY 軸範圍
-      const speedValues = scatterData.map(d => d[1]);
-      const pressureValues = scatterData.map(d => d[2]);
-      const xMin = Math.min(...speedValues);
-      const xMax = Math.max(...speedValues);
-      const yMin = Math.min(...pressureValues);
-      const yMax = Math.max(...pressureValues);
+            // 建立資料 [time(ms), speed, pressure, id]
+            const scatterData = models.map(m => [
+              new Date(m.dt).getTime(),
+              Number(m.max_speed),
+              Number(m.max_pressure),
+              m.diecasting_eigenvalue_data_id,
+              m.type
+            ]);
 
-      const optionBase = {
-        title: { text: "Scatter: Max Speed vs Max Pressure", left: "center" },
-        tooltip: {
-          trigger: "item",
-          formatter: function(p) {
-            const [time, speed, pressure, id] = p.value;
-            const d = new Date(time);
-            const pad = n => (n < 10 ? "0"+n : n);
-            const timeStr = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-            return `<b>ID:</b> ${id}<br/><b>Time:</b> ${timeStr}<br/><b>Speed:</b> ${speed}<br/><b>Pressure:</b> ${pressure}`;
-          }
-        },
-        xAxis: { type: "value", name: "Max Speed", min: 0, max: xMax+100, nameLocation: "middle", nameGap: 30 },
-        yAxis: { type: "value", name: "Max Pressure", min: 0, max: yMax+100, nameLocation: "middle", nameGap: 40 },
-        series: [{
-          type: "scatter",
-          symbolSize: 10,
-          data: scatterData,
-          encode: { x: 1, y: 2 },
-          animation: false
-        }]
-      };
+            const chart = echarts.init(document.getElementById("chart"));
 
-      chart.setOption(optionBase);
+            // 固定 XY 軸範圍
+            const speedValues = scatterData.map(d => d[1]);
+            const pressureValues = scatterData.map(d => d[2]);
+            const xMin = Math.min(...speedValues);
+            const xMax = Math.max(...speedValues);
+            const yMin = Math.min(...pressureValues);
+            const yMax = Math.max(...pressureValues);
 
-      // 下方滑軌設定
-      const times = scatterData.map(d => d[0]);
-      const minTime = Math.min(...times);
-      const maxTime = Math.max(...times);
-
-      const slider = document.getElementById('timeSlider');
-      noUiSlider.create(slider, {
-        start: [minTime, maxTime],
-        connect: true,
-        range: { min: minTime, max: maxTime },
-        step: 1000,
-        format: wNumb({ decimals: 0 })
-      });
-
-      const rangeLabel = document.getElementById('rangeLabel');
-      const statsDiv = document.getElementById('stats');
-
-      function formatTimeLabel(ms) {
-        const d = new Date(+ms);
-        const pad = n => (n < 10 ? "0"+n : n);
-        return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      }
-
-      function updateStats(data) {
-        if (data.length === 0) {
-          statsDiv.textContent = "No data in this range";
-          return;
+          
+            const optionBase = {
+              title: { text: "Scatter: Max Speed vs Max Pressure", left: "center" },
+             tooltip: {
+        trigger: "item",
+        formatter: function(p) {
+          const [time, speed, pressure, id, type] = p.value; // ← 多解構出 type
+          const d = new Date(time);
+          const pad = n => (n < 10 ? "0"+n : n);
+          const timeStr = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+          return `
+            <b>ID:</b> ${id}<br/>
+            <b>Type:</b> ${type}<br/>
+            <b>Time:</b> ${timeStr}<br/>
+            <b>Speed:</b> ${speed}<br/>
+            <b>Pressure:</b> ${pressure}
+          `;
         }
-        const speeds = data.map(d => d[1]);
-        const pressures = data.map(d => d[2]);
-        const avgSpeed = (speeds.reduce((a,b)=>a+b,0)/speeds.length).toFixed(2);
-        const avgPressure = (pressures.reduce((a,b)=>a+b,0)/pressures.length).toFixed(2);
-        const maxSpeed = Math.max(...speeds);
-        const minSpeed = Math.min(...speeds);
-        const maxPressure = Math.max(...pressures);
-        const minPressure = Math.min(...pressures);
-        statsDiv.innerHTML = `
-          <b>Data Count:</b> ${data.length} &nbsp;
-          <b>Speed:</b> min ${minSpeed}, max ${maxSpeed}, avg ${avgSpeed} &nbsp;
-          <b>Pressure:</b> min ${minPressure}, max ${maxPressure}, avg ${avgPressure}
-        `;
-      }
+      },
+              xAxis: { type: "value", name: "Max Speed", min: 0, max: xMax+100, nameLocation: "middle", nameGap: 30 },
+              yAxis: { type: "value", name: "Max Pressure", min: 0, max: yMax+100, nameLocation: "middle", nameGap: 40 },
+              series: [{
+                type: "scatter",
+                symbolSize: 10,
+                data: scatterData,
+                encode: { x: 1, y: 2 },
+                animation: false
+              }]
+            };
 
-      // 初始統計
-      updateStats(scatterData);
+            chart.setOption(optionBase);
 
-      // 滑動滑軌時更新 ECharts 數據和統計
-      slider.noUiSlider.on('update', (values) => {
-        const start = Number(values[0]);
-        const end = Number(values[1]);
-        rangeLabel.textContent = `Time: ${formatTimeLabel(start)} ~ ${formatTimeLabel(end)}`;
-        const filtered = scatterData.filter(d => d[0] >= start && d[0] <= end);
-        chart.setOption({
-          series: [{ data: filtered }]
-        });
-        updateStats(filtered);
-      });
+            // 下方滑軌設定
+            const times = scatterData.map(d => d[0]);
+            const minTime = Math.min(...times);
+            const maxTime = Math.max(...times);
 
-      window.addEventListener("resize", () => chart.resize());
+            const slider = document.getElementById('timeSlider');
+            noUiSlider.create(slider, {
+              start: [minTime, maxTime],
+              connect: true,
+              range: { min: minTime, max: maxTime },
+              step: 1000,
+              format: wNumb({ decimals: 0 })
+            });
+
+            const rangeLabel = document.getElementById('rangeLabel');
+            const statsDiv = document.getElementById('stats');
+
+            function formatTimeLabel(ms) {
+              const d = new Date(+ms);
+              const pad = n => (n < 10 ? "0"+n : n);
+              return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            }
+
+            function updateStats(data) {
+              if (data.length === 0) {
+                statsDiv.textContent = "No data in this range";
+                return;
+              }
+              const speeds = data.map(d => d[1]);
+              const pressures = data.map(d => d[2]);
+              const avgSpeed = (speeds.reduce((a,b)=>a+b,0)/speeds.length).toFixed(2);
+              const avgPressure = (pressures.reduce((a,b)=>a+b,0)/pressures.length).toFixed(2);
+              const maxSpeed = Math.max(...speeds);
+              const minSpeed = Math.min(...speeds);
+              const maxPressure = Math.max(...pressures);
+              const minPressure = Math.min(...pressures);
+              statsDiv.innerHTML = `
+                <b>Data Count:</b> ${data.length} &nbsp;
+                <b>Speed:</b> min ${minSpeed}, max ${maxSpeed}, avg ${avgSpeed} &nbsp;
+                <b>Pressure:</b> min ${minPressure}, max ${maxPressure}, avg ${avgPressure}
+              `;
+            }
+
+            // 初始統計
+            updateStats(scatterData);
+
+            // 滑動滑軌時更新 ECharts 數據和統計
+            slider.noUiSlider.on('update', (values) => {
+              const start = Number(values[0]);
+              const end = Number(values[1]);
+              rangeLabel.textContent = `Time: ${formatTimeLabel(start)} ~ ${formatTimeLabel(end)}`;
+              const filtered = scatterData.filter(d => d[0] >= start && d[0] <= end);
+              chart.setOption({
+                series: [{ data: filtered }]
+              });
+              updateStats(filtered);
+            });
+
+            window.addEventListener("resize", () => chart.resize());
     </script>
   </body>
 </html>
