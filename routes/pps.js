@@ -15,7 +15,6 @@ router.get("/", async (req, res) => {
         speed: { [Op.ne]: null },
         position: { [Op.ne]: null },
         casting_pressure: { [Op.ne]: null },
-        
       },
       limit: 50,
       order: [["diecasting_eigenvalue_data_id", "DESC"]],
@@ -30,7 +29,33 @@ router.get("/", async (req, res) => {
       return arr.map((val) => val * multiplier);
     }
 
-    // Loop through dataFromDb and assign to rawModel, then add to modelArray
+    function labelType(lasercode) {
+      // Guard clause: Ensure the input is a valid string before processing.
+      if (!lasercode || typeof lasercode !== "string") {
+        return "";
+      }
+
+      // In SQL, SUBSTRING(string FROM 3 FOR 9) gets 9 characters starting at the 3rd position.
+      // In JavaScript, strings are 0-indexed, so we use .slice(2, 11).
+      // This starts at index 2 (the 3rd character) and ends at index 11 (2 + 9).
+      const codePart = lasercode.slice(2, 11);
+
+      switch (codePart) {
+        case "887866302":
+          return "LR";
+        case "887866402":
+          return "LL";
+        case "886194201":
+          return "MR";
+        case "886194301":
+          return "ML";
+        case "886194401":
+          return "ZP";
+        default: // This is the equivalent of the SQL 'ELSE'
+          return "";
+      }
+    }
+
     // Loop through dataFromDb and assign to rawModel, then add to modelArray
     dataFromDb.forEach((item) => {
       const rawPressure = Array.isArray(item.casting_pressure)
@@ -45,6 +70,8 @@ router.get("/", async (req, res) => {
         ? item.position
         : convertStringToArray(item.position);
 
+      const typeLabel = labelType(item.lasercode);
+
       const model = {
         ...rawModel,
         diecasting_eigenvalue_data_id: item.diecasting_eigenvalue_data_id,
@@ -53,6 +80,7 @@ router.get("/", async (req, res) => {
         speed: normalizeArray(rawSpeed, 15), // ✅ normalized
         sm: item.sm ?? 0,
         dt: item.dt || rawModel.dt,
+        type: typeLabel,
       };
 
       modelArray.push(model);
@@ -61,6 +89,7 @@ router.get("/", async (req, res) => {
     // Pass data to view correctly
 
     console.log("Rendering pps with data:", modelArray);
+    // res.send(modelArray);
     res.render("pps", { models: modelArray });
   } catch (error) {
     console.error("Error fetching data:", error);
