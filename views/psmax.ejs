@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Max Pressure vs Max Speed</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #f4f4f4;
+        padding: 20px;
+      }
+      #chart {
+        width: 100%;
+        height: 600px;
+      }
+      #sliderContainer {
+        width: 100%;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .label {
+        text-align: center;
+      }
+      #stats {
+        margin-top: 10px;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  </head>
+  <body>
+    <h1>Max Pressure vs Max Speed</h1>
+    <div id="chart"></div>
+    <div id="sliderContainer">
+      <input
+        type="range"
+        id="rangeSlider"
+        min="0"
+        max="100"
+        value="0"
+        step="1"
+        multiple
+      />
+      <div class="label" id="rangeLabel"></div>
+      <div id="stats"></div>
+    </div>
+
+    <script>
+      const models = <%- JSON.stringify(models) %>;
+
+      const scatterData = models.map(m => [
+        new Date(m.dt).getTime(),
+        Number(m.max_speed),
+        Number(m.max_pressure),
+        m.diecasting_eigenvalue_data_id
+      ]);
+
+      const chart = echarts.init(document.getElementById("chart"));
+
+      const speedValues = scatterData.map(d => d[1]);
+      const pressureValues = scatterData.map(d => d[2]);
+      const xMin = Math.min(...speedValues);
+      const xMax = Math.max(...speedValues);
+      const yMin = Math.min(...pressureValues);
+      const yMax = Math.max(...pressureValues);
+
+      const minTime = Math.min(...scatterData.map(d => d[0]));
+      const maxTime = Math.max(...scatterData.map(d => d[0]));
+
+      function formatTimeLabel(ts) {
+        const d = new Date(ts);
+        const pad = n => (n < 10 ? "0"+n : n);
+        return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+
+      function renderScatter(filteredData) {
+        chart.setOption({
+          xAxis: { type: "value", name: "Max Speed", min: xMin, max: xMax, nameLocation: "middle", nameGap: 30 },
+          yAxis: { type: "value", name: "Max Pressure", min: yMin, max: yMax, nameLocation: "middle", nameGap: 40 },
+          tooltip: {
+            trigger: "item",
+            formatter: function (p) {
+              const [time, speed, pressure, id] = p.value;
+              const d = new Date(time);
+              const pad = n => (n < 10 ? "0"+n : n);
+              const timeStr = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+              return `<b>ID:</b> ${id}<br/><b>Time:</b> ${timeStr}<br/><b>Speed:</b> ${speed}<br/><b>Pressure:</b> ${pressure}`;
+            }
+          },
+          series: [{
+            type: "scatter",
+            symbolSize: 10,
+            encode: { x: 1, y: 2, tooltip: [1,2,0,3] },
+            data: filteredData
+          }]
+        });
+
+        if (filteredData.length > 0) {
+          const speeds = filteredData.map(d => d[1]);
+          const pressures = filteredData.map(d => d[2]);
+          document.getElementById("stats").innerHTML =
+            `<b>Current Range:</b> ${filteredData.length} points<br/>
+             Max Speed: ${Math.max(...speeds)}, Min Speed: ${Math.min(...speeds)}<br/>
+             Max Pressure: ${Math.max(...pressures)}, Min Pressure: ${Math.min(...pressures)}`;
+        } else {
+          document.getElementById("stats").innerHTML = "No data in range";
+        }
+      }
+
+      function updateScatterRange(startPercent, endPercent) {
+        let startTime = minTime + (maxTime - minTime) * startPercent;
+        let endTime = minTime + (maxTime - minTime) * endPercent;
+        if (startTime > endTime) startTime = endTime;
+
+        document.getElementById("rangeLabel").textContent =
+          `Time Range: ${formatTimeLabel(startTime)} ~ ${formatTimeLabel(endTime)}`;
+
+        const filtered = scatterData.filter(d => d[0] >= startTime && d[0] <= endTime);
+        renderScatter(filtered);
+      }
+
+      // 初始顯示全範圍
+      updateScatterRange(0,1);
+
+      // 單一雙滑桿控制範圍 (模擬雙滑)
+      const slider = document.getElementById("rangeSlider");
+      let startPercent = 0;
+      let endPercent = 1;
+
+      slider.addEventListener("input", e => {
+        const val = Number(e.target.value)/100;
+        const middle = 0.5; // 可自訂起始位置
+        startPercent = Math.min(val, middle);
+        endPercent = Math.max(val, middle+0.001);
+        updateScatterRange(startPercent, endPercent);
+      });
+
+      window.addEventListener("resize", () => chart.resize());
+    </script>
+  </body>
+</html>
