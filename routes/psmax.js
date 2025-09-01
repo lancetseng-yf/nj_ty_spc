@@ -29,6 +29,33 @@ router.get("/", async (req, res) => {
       return Math.max(...arr);
     }
 
+    function labelType(lasercode) {
+      // Guard clause: Ensure the input is a valid string before processing.
+      if (!lasercode || typeof lasercode !== "string") {
+        return "";
+      }
+
+      // In SQL, SUBSTRING(string FROM 3 FOR 9) gets 9 characters starting at the 3rd position.
+      // In JavaScript, strings are 0-indexed, so we use .slice(2, 11).
+      // This starts at index 2 (the 3rd character) and ends at index 11 (2 + 9).
+      const codePart = lasercode.slice(2, 11);
+
+      switch (codePart) {
+        case "887866302":
+          return "LR";
+        case "887866402":
+          return "LL";
+        case "886194201":
+          return "MR";
+        case "886194301":
+          return "ML";
+        case "886194401":
+          return "ZP";
+        default: // This is the equivalent of the SQL 'ELSE'
+          return "";
+      }
+    }
+
     // loop dataFromDb get rawModel.casting_pressure max value to rawModel.max_pressure & get max speed value to rawModel.max_speed
     dataFromDb.forEach((item) => {
       const castingPressureArray = convertStringToArray(item.casting_pressure);
@@ -36,6 +63,7 @@ router.get("/", async (req, res) => {
 
       const maxPressure = safeMax(castingPressureArray);
       const maxSpeed = safeMax(speedArray);
+      const type = labelType(item.lasercode);
 
       const model = {
         ...rawModel,
@@ -43,6 +71,7 @@ router.get("/", async (req, res) => {
         max_pressure: maxPressure,
         max_speed: maxSpeed,
         dt: item.dt || rawModel.dt,
+        type: type,
       };
       modelArray.push(model);
     });
