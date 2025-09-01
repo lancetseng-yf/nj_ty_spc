@@ -90,16 +90,22 @@
         const xMax = Math.max(...speeds, 0);
         const yMax = Math.max(...pressures, 0);
 
-        let markArea = null;
+        let markLine = null;
         if (productConfig) {
           const speedMin = productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
           const speedMax = productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
           const pressureMin = productConfig.castingPressure.target - productConfig.castingPressure.tolerance;
           const pressureMax = productConfig.castingPressure.target + productConfig.castingPressure.tolerance;
-          markArea = {
+
+          markLine = {
             silent: true,
-            itemStyle: { color: "rgba(0,200,0,0.1)" },
-            data: [[{ xAxis: speedMin, yAxis: pressureMin }, { xAxis: speedMax, yAxis: pressureMax }]]
+            lineStyle: { type: "dashed", color: "red" },
+            data: [
+              { xAxis: speedMin, name: "Speed Min" },
+              { xAxis: speedMax, name: "Speed Max" },
+              { yAxis: pressureMin, name: "Pressure Min" },
+              { yAxis: pressureMax, name: "Pressure Max" }
+            ]
           };
         }
 
@@ -129,10 +135,10 @@
               symbolSize: 10,
               data,
               encode: { x: 1, y: 2 },
-              animation: false
+              animation: false,
+              markLine
             }
-          ],
-          markArea
+          ]
         };
       }
 
