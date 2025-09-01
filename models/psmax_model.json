@@ -3,5 +3,6 @@
     "dt": "2025/03/04 14:41:36",
     "create_time": "2025/03/04 14:41:36",
     "max_pressure":30,
-    "max_speed":50
+    "max_speed":50,
+    "type":""
 }
