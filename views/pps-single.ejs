@@ -12,6 +12,20 @@
       #controls {
         margin-bottom: 20px;
       }
+      #controls label {
+        font-size: 18px;
+        margin-right: 10px;
+      }
+      #productSelect {
+        font-size: 18px;
+        padding: 5px 10px;
+        min-width: 120px;
+      }
+      #controls button {
+        font-size: 16px;
+        padding: 5px 10px;
+        margin-left: 5px;
+      }
       #chart {
         width: 100%;
         height: 600px;
@@ -62,13 +76,28 @@
           title: {
             text: `${model.type || "N/A"} - ${formatDateTime(model.dt)} (ID: ${model.diecasting_eigenvalue_data_id})`
           },
-          tooltip: { trigger: 'axis' },
+          tooltip: {
+            trigger: 'axis',
+            formatter: function(params) {
+              let idx = params[0].dataIndex + 1;
+              let tooltipText = `Index: ${idx}<br/>`;
+                  tooltipText += `Biscuit: ${model.sm}<br/>`;  
+              params.forEach(p => {
+                let displayValue = p.seriesName === 'Pressure' || p.seriesName === 'Speed'
+                  ? p.data / 15
+                  : p.data;
+                tooltipText += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color}"></span>`;
+                tooltipText += `${p.seriesName}: ${displayValue}<br/>`;
+              });
+              return tooltipText;
+            }
+          },
           legend: { data: ['Pressure','Position','Speed'] },
           toolbox: {
             show: true,
             feature: {
               dataZoom: { yAxisIndex: 'none' },
-              dataView: { readOnly: false },
+              
               restore: {},
             }
           },
@@ -78,13 +107,13 @@
           xAxis: {
             type: 'category',
             boundaryGap: false,
-            data: model.position.map((_,i)=>i+1), // index 當 x 軸,
+            data: model.position.map((_,i)=>i+1),
           },
           yAxis: { type: 'value' },
           series: [
-            { name: 'Pressure', type: 'line', data: model.pressure || [] },
+            { name: 'Pressure', type: 'line', data: (model.pressure || []).map(v => v * 15) },
             { name: 'Position', type: 'line', data: model.position || [] },
-            { name: 'Speed', type: 'line', data: model.speed || [] }
+            { name: 'Speed', type: 'line', data: (model.speed || []).map(v => v * 15) }
           ]
         };
         chart.setOption(option);
@@ -107,17 +136,17 @@
         renderChart(filtered[currentIndex]);
       }
 
-      document.getElementById("productSelect").addEventListener("change", ()=>{
+      document.getElementById("productSelect").addEventListener("change", ()=> {
         currentIndex = 0;
         updateChart();
       });
 
-      document.getElementById("prevBtn").addEventListener("click", ()=>{
+      document.getElementById("prevBtn").addEventListener("click", ()=> {
         currentIndex--;
         updateChart();
       });
 
-      document.getElementById("nextBtn").addEventListener("click", ()=>{
+      document.getElementById("nextBtn").addEventListener("click", ()=> {
         currentIndex++;
         updateChart();
       });
