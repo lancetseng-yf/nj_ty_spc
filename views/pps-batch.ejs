@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PPS ECharts</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #f4f4f4;
+        padding: 20px;
+      }
+      #chart {
+        width: 100%;
+        height: 600px;
+      }
+      #productSelectBox {
+        margin: 10px 0;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  </head>
+  <body>
+    <h1>Diecasting Eigenvalue Data Chart - Batch</h1>
+
+    <!-- Dropdown -->
+    <div id="productSelectBox">
+      <label for="productSelect"><b>Select Type:</b></label>
+      <select id="productSelect"></select>
+    </div>
+
+    <div id="chart"></div>
+
+    <script>
+      window.__MODELS__ = <%- JSON.stringify(models) %>;
+
+      const productList = ["LL", "LR", "ML", "MR"];
+
+      (function () {
+        function parseDate(dtStr) {
+          return new Date(dtStr);
+        }
+        function fmtDateYMDHMS(d) {
+          const pad = n => (n < 10 ? "0" + n : "" + n);
+          return `${d.getUTCFullYear()}/${pad(
+            d.getUTCMonth() + 1
+          )}/${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(
+            d.getUTCMinutes()
+          )}:${pad(d.getUTCSeconds())}`;
+        }
+
+        function buildTimeValuePairs(values, dtStr, hz, id, type) {
+          const out = [];
+          const start = parseDate(dtStr).getTime();
+          const step = 1000 / (hz || 50);
+          for (let i = 0; i < values.length; i++) {
+            out.push({
+              value: [new Date(start + i * step), values[i]],
+              diecastingId: id,
+              type,
+            });
+          }
+          return out;
+        }
+
+        const models = Array.isArray(window.__MODELS__)
+          ? window.__MODELS__
+          : [];
+        models.sort(
+          (a, b) =>
+            Number(a.diecasting_eigenvalue_data_id) -
+            Number(b.diecasting_eigenvalue_data_id)
+        );
+
+        const el = document.getElementById("chart");
+        const chart = echarts.init(el, null, { renderer: "canvas" });
+
+        // === 封裝 chart option ===
+        function buildOption(filteredModels) {
+          const HZ = 50;
+          const posData = [],
+            pressData = [],
+            speedData = [];
+
+          for (const m of filteredModels) {
+            if (Array.isArray(m.position)) {
+              posData.push(
+                ...buildTimeValuePairs(
+                  m.position,
+                  m.dt,
+                  HZ,
+                  m.diecasting_eigenvalue_data_id,
+                  m.type
+                )
+              );
+              posData.push({ value: [null, null] }); // batch break
+            }
+            if (Array.isArray(m.pressure)) {
+              pressData.push(
+                ...buildTimeValuePairs(
+                  m.pressure,
+                  m.dt,
+                  HZ,
+                  m.diecasting_eigenvalue_data_id,
+                  m.type
+                )
+              );
+              pressData.push({ value: [null, null] });
+            }
+            if (Array.isArray(m.speed)) {
+              speedData.push(
+                ...buildTimeValuePairs(
+                  m.speed,
+                  m.dt,
+                  HZ,
+                  m.diecasting_eigenvalue_data_id,
+                  m.type
+                )
+              );
+              speedData.push({ value: [null, null] });
+            }
+          }
+
+          return {
+            animation: false,
+            grid: {
+              left: 60,
+              right: 24,
+              top: 24,
+              bottom: 60,
+              containLabel: true,
+            },
+            xAxis: {
+              type: "time",
+              name: "Time",
+              nameGap: 24,
+              nameLocation: "middle",
+              axisLabel: {
+                formatter: val => fmtDateYMDHMS(new Date(val)),
+              },
+              splitLine: { show: true },
+            },
+            yAxis: {
+              type: "value",
+              name: "Value",
+              nameGap: 14,
+              nameLocation: "middle",
+              splitLine: { show: true },
+            },
+            dataZoom: [
+              {
+                type: "slider",
+                xAxisIndex: 0,
+                filterMode: "none",
+                bottom: 10,
+                height: 24,
+              },
+              {
+                type: "inside",
+                xAxisIndex: 0,
+                filterMode: "none",
+                zoomOnMouseWheel: true,
+                moveOnMouseMove: true,
+                moveOnMouseWheel: true,
+              },
+            ],
+            tooltip: {
+              trigger: "axis",
+              axisPointer: { type: "cross" },
+              formatter: function (params) {
+                let timeStr = "";
+                let idStr = "";
+                let typeStr = "";
+                const lines = params.map(p => {
+                  const valObj = p.value.value || p.value;
+                  const [time, val] = valObj;
+                  timeStr = fmtDateYMDHMS(new Date(time));
+                  idStr = p.data.diecastingId || idStr;
+                  typeStr = p.data.type || typeStr;
+                  return `${p.marker} ${p.seriesName}: <b>${val}</b>`;
+                });
+                return `
+                  <div>
+                    <b>Time: ${timeStr}</b><br/>
+                    <b>Id: ${idStr}</b><br/>
+                    <b>Type: ${typeStr}</b><br/>
+                    ${lines.join("<br/>")}
+                  </div>
+                `;
+              },
+            },
+            legend: { top: 0, data: ["Position", "Pressure", "Speed"] },
+            toolbox: { feature: { restore: {} }, right: 10 },
+            series: [
+              {
+                name: "Position",
+                type: "line",
+                smooth: true,
+                showSymbol: false,
+                large: true,
+                progressive: 2000,
+                encode: { x: 0, y: 1 },
+                data: posData,
+              },
+              {
+                name: "Pressure",
+                type: "line",
+                smooth: true,
+                showSymbol: false,
+                large: true,
+                progressive: 2000,
+                encode: { x: 0, y: 1 },
+                data: pressData,
+              },
+              {
+                name: "Speed",
+                type: "line",
+                smooth: true,
+                showSymbol: false,
+                large: true,
+                progressive: 2000,
+                encode: { x: 0, y: 1 },
+                data: speedData,
+              },
+            ],
+          };
+        }
+
+        // === 下拉框 ===
+        const productSelect = document.getElementById("productSelect");
+        productList.forEach(p => {
+          const option = document.createElement("option");
+          option.value = p;
+          option.textContent = p;
+          productSelect.appendChild(option);
+        });
+
+        // 初始：全部資料
+        chart.setOption(buildOption(models));
+
+        // 綁定事件
+        productSelect.addEventListener("change", e => {
+          const selected = e.target.value;
+          const filteredModels = models.filter(m => m.type === selected);
+          chart.setOption(buildOption(filteredModels));
+        });
+
+        window.addEventListener("resize", () => chart.resize());
+      })();
+    </script>
+  </body>
+</html>

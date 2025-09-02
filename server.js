@@ -15,8 +15,8 @@ const indexRoutes = require("./routes/index");
 app.use("/", indexRoutes);
 
 app.use("/load-data", require("./routes/load-data"));
-app.use("/pps-chart", require("./routes/pps"));
-app.use("/psmax-chart", require("./routes/psmax"));
+app.use("/pps", require("./routes/pps"));
+app.use("/psmax", require("./routes/psmax"));
 
 
 // Add your data visualization logic here
