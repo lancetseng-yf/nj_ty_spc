@@ -53,17 +53,11 @@
   <body>
     <h1>Max Pressure vs Max Speed</h1>
 
-    <!-- 下拉選單靠左、放大 -->
-    <div
-      id="productSelectBox"
-      style="text-align: left; margin: 15px 0; font-size: 18px"
-    >
-      <label for="productSelect"><b>Select Product:</b></label>
-      <select
-        id="productSelect"
-        style="font-size: 18px; padding: 5px 10px"
-      ></select>
-    </div>
+<!-- 下拉選單靠左、放大 -->
+<div id="productSelectBox" style="text-align:left; margin:15px 0; font-size:18px;">
+  <label for="productSelect"><b>Select Product:</b></label>
+  <select id="productSelect" style="font-size:18px; padding:5px 10px;"></select>
+</div>
 
     <div id="chart"></div>
     <div id="rangeLabel"></div>
@@ -154,12 +148,21 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${p.productName}</td>
-          <td>NG</td>
+          <td>Warm-Up</td>
           <td>${ngCount}</td>
           <td>${total}</td>
           <td>${total?((ngCount/total)*100).toFixed(2)+"%":"0.00%"}</td>
         `;
         statsTableBody.appendChild(tr);
+        const tr2 = document.createElement("tr");
+        tr2.innerHTML = `
+          <td>${p.productName}</td>
+          <td>Normal</td>
+          <td>${okCount}</td>
+          <td>${total}</td>
+          <td>${total?((okCount/total)*100).toFixed(2)+"%":"0.00%"}</td>
+        `;
+        statsTableBody.appendChild(tr2);
       }
 
       // 時間滑軌
