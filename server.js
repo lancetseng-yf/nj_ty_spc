@@ -17,7 +17,8 @@ app.use("/", indexRoutes);
 app.use("/load-data", require("./routes/load-data"));
 app.use("/pps", require("./routes/pps"));
 app.use("/psmax", require("./routes/psmax"));
-
+app.use("/bmw-kanban", require("./routes/bmw-kanban"));
+app.use("/biscuit", require("./routes/biscuit"));
 
 // Add your data visualization logic here
 

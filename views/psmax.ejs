@@ -9,6 +9,14 @@
         background-color: #f4f4f4;
         padding: 20px;
       }
+      #productSelectBox {
+        text-align: center;
+        margin: 15px 0;
+      }
+      #productSelect {
+        font-size: 16px;
+        padding: 3px 8px;
+      }
       #chart {
         width: 100%;
         height: 600px;
@@ -22,13 +30,16 @@
         margin-bottom: 10px;
         font-weight: bold;
       }
-      #stats {
+      #statsTable {
+        width: 80%;
+        margin: 20px auto;
+        border-collapse: collapse;
         text-align: center;
-        margin-top: 10px;
       }
-      #productSelectBox {
-        text-align: center;
-        margin: 15px;
+      #statsTable th,
+      #statsTable td {
+        border: 1px solid #ccc;
+        padding: 6px 10px;
       }
     </style>
     <link
@@ -41,21 +52,39 @@
   </head>
   <body>
     <h1>Max Pressure vs Max Speed</h1>
+
+    <!-- 下拉選單靠左、放大 -->
+    <div
+      id="productSelectBox"
+      style="text-align: left; margin: 15px 0; font-size: 18px"
+    >
+      <label for="productSelect"><b>Select Product:</b></label>
+      <select
+        id="productSelect"
+        style="font-size: 18px; padding: 5px 10px"
+      ></select>
+    </div>
+
     <div id="chart"></div>
     <div id="rangeLabel"></div>
     <div id="timeSlider"></div>
-    <div id="stats"></div>
 
-    <!-- 下拉框 -->
-    <div id="productSelectBox">
-      <label for="productSelect"><b>Select Product:</b></label>
-      <select id="productSelect"></select>
-    </div>
+    <!-- 統計表格 -->
+    <table id="statsTable">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Status</th>
+          <th>Count</th>
+          <th>Total</th>
+          <th>Percent</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
     <script>
       const models = <%- JSON.stringify(models) %>;
-
-      // === Product List (標準值 + 容差) ===
       const productList = [
         { productName: "LL", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
         { productName: "LR", highSpeed: { target: 450, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
@@ -63,170 +92,117 @@
         { productName: "MR", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 750, tolerance: 50 } }
       ];
 
-      // 填充下拉框
       const productSelect = document.getElementById("productSelect");
-      productList.forEach(p => {
-        const option = document.createElement("option");
-        option.value = p.productName;
-        option.textContent = p.productName;
+      productList.forEach(p=>{
+        const option=document.createElement("option");
+        option.value=p.productName; option.textContent=p.productName;
         productSelect.appendChild(option);
       });
 
-      // 建立資料 [time, speed, pressure, id, type]
-      const scatterData = models.map(m => [
+      const scatterData = models.map(m=>[
         new Date(m.dt).getTime(),
         Number(m.max_speed),
         Number(m.max_pressure),
         m.diecasting_eigenvalue_data_id,
-        m.type   // 注意：type 就是 productName
+        m.type
       ]);
 
       const chart = echarts.init(document.getElementById("chart"));
+      const statsTableBody = document.querySelector("#statsTable tbody");
 
-      // === Chart Option Function ===
-      function getChartOption(data, productConfig) {
-        const speeds = data.map(d => d[1]);
-        const pressures = data.map(d => d[2]);
-        const xMax = Math.max(...speeds, 0);
-        const yMax = Math.max(...pressures, 0);
-
+      function getChartOption(data, productConfig){
+        const speeds = data.map(d=>d[1]);
+        const pressures = data.map(d=>d[2]);
+        const xMax = Math.max(...speeds,0);
+        const yMax = Math.max(...pressures,0);
         let markLine = null;
-        if (productConfig) {
-          const speedMin = productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
-          const speedMax = productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
-          const pressureMin = productConfig.castingPressure.target - productConfig.castingPressure.tolerance;
-          const pressureMax = productConfig.castingPressure.target + productConfig.castingPressure.tolerance;
-
+        if(productConfig){
+          const sMin = productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
+          const sMax = productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
+          const pMin = productConfig.castingPressure.target - productConfig.castingPressure.tolerance;
+          const pMax = productConfig.castingPressure.target + productConfig.castingPressure.tolerance;
           markLine = {
-            silent: true,
-            lineStyle: { type: "dashed", color: "red" },
-            data: [
-              { xAxis: speedMin, name: "Speed Min" },
-              { xAxis: speedMax, name: "Speed Max" },
-              { yAxis: pressureMin, name: "Pressure Min" },
-              { yAxis: pressureMax, name: "Pressure Max" }
-            ]
+            silent:true,
+            lineStyle:{type:"dashed",color:"red"},
+            data:[{xAxis:sMin},{xAxis:sMax},{yAxis:pMin},{yAxis:pMax}]
           };
         }
-
         return {
-          title: { text: "Scatter: Max Speed vs Max Pressure", left: "center" },
-          tooltip: {
-            trigger: "item",
-            formatter: function (p) {
-              const [time, speed, pressure, id, type] = p.value;
-              const d = new Date(time);
-              const pad = n => (n < 10 ? "0" + n : n);
-              const timeStr = `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-              return `
-                <b>ID:</b> ${id}<br/>
-                <b>Type:</b> ${type}<br/>
-                <b>Time:</b> ${timeStr}<br/>
-                <b>Speed:</b> ${speed}<br/>
-                <b>Pressure:</b> ${pressure}
-              `;
-            }
-          },
-          xAxis: { type: "value", name: "Max Speed", min: 0, max: xMax + 100, nameLocation: "middle", nameGap: 30 },
-          yAxis: { type: "value", name: "Max Pressure", min: 0, max: yMax + 100, nameLocation: "middle", nameGap: 40 },
-          series: [
-            {
-              type: "scatter",
-              symbolSize: 10,
-              data,
-              encode: { x: 1, y: 2 },
-              animation: false,
-              markLine
-            }
-          ]
+          title:{text:"Scatter: Max Speed vs Max Pressure",left:"center"},
+          tooltip:{trigger:"item"},
+          xAxis:{type:"value",name:"Max Speed",min:0,max:xMax+100,nameLocation:"middle",nameGap:30},
+          yAxis:{type:"value",name:"Max Pressure",min:0,max:yMax+100,nameLocation:"middle",nameGap:40},
+          series:[{type:"scatter",symbolSize:10,data,encode:{x:1,y:2},animation:false,markLine}]
         };
       }
 
-      // === 統計顯示 ===
-      const statsDiv = document.getElementById("stats");
-      function updateStats(data) {
-        if (data.length === 0) {
-          statsDiv.textContent = "No data in this range";
-          return;
-        }
-        const speeds = data.map(d => d[1]);
-        const pressures = data.map(d => d[2]);
-        const avgSpeed = (speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(2);
-        const avgPressure = (pressures.reduce((a, b) => a + b, 0) / pressures.length).toFixed(2);
-        const maxSpeed = Math.max(...speeds);
-        const minSpeed = Math.min(...speeds);
-        const maxPressure = Math.max(...pressures);
-        const minPressure = Math.min(...pressures);
-        statsDiv.innerHTML = `
-          <b>Data Count:</b> ${data.length} &nbsp;
-          <b>Speed:</b> min ${minSpeed}, max ${maxSpeed}, avg ${avgSpeed} &nbsp;
-          <b>Pressure:</b> min ${minPressure}, max ${maxPressure}, avg ${avgPressure}
+      function updateStatsTable(data){
+        statsTableBody.innerHTML="";
+        if(!selectedProduct) return;
+
+        const p = selectedProduct;
+        const pData = data.filter(d=>d[4]===p.productName);
+        const total = pData.length;
+        const sMin = p.highSpeed.target - p.highSpeed.tolerance;
+        const sMax = p.highSpeed.target + p.highSpeed.tolerance;
+        const pMin = p.castingPressure.target - p.castingPressure.tolerance;
+        const pMax = p.castingPressure.target + p.castingPressure.tolerance;
+
+        const okCount = pData.filter(d=>d[1]>=sMin && d[1]<=sMax && d[2]>=pMin && d[2]<=pMax).length;
+        const ngCount = total - okCount;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${p.productName}</td>
+          <td>NG</td>
+          <td>${ngCount}</td>
+          <td>${total}</td>
+          <td>${total?((ngCount/total)*100).toFixed(2)+"%":"0.00%"}</td>
         `;
+        statsTableBody.appendChild(tr);
       }
 
-      // === 時間滑軌 ===
-      const times = scatterData.map(d => d[0]);
+      // 時間滑軌
+      const times = scatterData.map(d=>d[0]);
       const minTime = Math.min(...times);
       const maxTime = Math.max(...times);
 
       const slider = document.getElementById("timeSlider");
-      noUiSlider.create(slider, {
-        start: [minTime, maxTime],
-        connect: true,
-        range: { min: minTime, max: maxTime },
-        step: 1000,
-        format: wNumb({ decimals: 0 })
+      noUiSlider.create(slider,{
+        start:[minTime,maxTime],
+        connect:true,
+        range:{min:minTime,max:maxTime},
+        step:1000,
+        format:wNumb({decimals:0})
       });
 
       const rangeLabel = document.getElementById("rangeLabel");
-      function formatTimeLabel(ms) {
-        const d = new Date(+ms);
-        const pad = n => (n < 10 ? "0" + n : n);
-        return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      function formatTime(ms){const d=new Date(+ms);const pad=n=>n<10?"0"+n:n;return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+
+      // 預設選中第一個產品
+      productSelect.value = productList[0].productName;
+      let selectedProduct = productList[0];
+
+      function refreshChart(){
+        let filtered = scatterData.filter(d=>d[0]>=Number(slider.noUiSlider.get()[0]) && d[0]<=Number(slider.noUiSlider.get()[1]));
+        if(selectedProduct) filtered = filtered.filter(d=>d[4]===selectedProduct.productName);
+        chart.setOption(getChartOption(filtered, selectedProduct));
+        updateStatsTable(filtered);
       }
 
-      // === 全域狀態 ===
-      let selectedProduct = null;
-      let filteredData = scatterData;
-
-      // 初始 render
-      chart.setOption(getChartOption(scatterData, null));
-      updateStats(scatterData);
-
-      // 滑動更新
-      slider.noUiSlider.on("update", values => {
-        const start = Number(values[0]);
-        const end = Number(values[1]);
-        rangeLabel.textContent = `Time: ${formatTimeLabel(start)} ~ ${formatTimeLabel(end)}`;
-
-        filteredData = scatterData.filter(d => d[0] >= start && d[0] <= end);
-
-        // 依產品再篩選
-        if (selectedProduct) {
-          filteredData = filteredData.filter(d => d[4] === selectedProduct.productName);
-        }
-
-        chart.setOption(getChartOption(filteredData, selectedProduct));
-        updateStats(filteredData);
+      slider.noUiSlider.on("update",()=>{
+        rangeLabel.textContent=`Time: ${formatTime(slider.noUiSlider.get()[0])} ~ ${formatTime(slider.noUiSlider.get()[1])}`;
+        refreshChart();
       });
 
-      // 產品選擇更新
-      productSelect.addEventListener("change", e => {
-        const product = productList.find(p => p.productName === e.target.value);
-        selectedProduct = product || null;
-
-        const [start, end] = slider.noUiSlider.get().map(Number);
-        filteredData = scatterData.filter(d => d[0] >= start && d[0] <= end);
-
-        if (selectedProduct) {
-          filteredData = filteredData.filter(d => d[4] === selectedProduct.productName);
-        }
-
-        chart.setOption(getChartOption(filteredData, selectedProduct));
-        updateStats(filteredData);
+      productSelect.addEventListener("change",e=>{
+        selectedProduct=productList.find(p=>p.productName===e.target.value)||null;
+        refreshChart();
       });
 
-      window.addEventListener("resize", () => chart.resize());
+      // 初始渲染
+      refreshChart();
+      window.addEventListener("resize",()=>chart.resize());
     </script>
   </body>
 </html>

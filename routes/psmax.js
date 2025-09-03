@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
         position: { [Op.ne]: null },
         casting_pressure: { [Op.ne]: null },
       },
-      limit: 500,
+      limit: 1000,
       order: [["diecasting_eigenvalue_data_id", "DESC"]],
     });
 

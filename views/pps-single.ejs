@@ -81,7 +81,7 @@
             formatter: function(params) {
               let idx = params[0].dataIndex + 1;
               let tooltipText = `Index: ${idx}<br/>`;
-                  tooltipText += `Biscuit: ${model.sm}<br/>`;  
+              tooltipText += `Biscuit: ${model.sm}<br/>`;
               params.forEach(p => {
                 let displayValue = p.seriesName === 'Pressure' || p.seriesName === 'Speed'
                   ? p.data / 15
@@ -97,7 +97,6 @@
             show: true,
             feature: {
               dataZoom: { yAxisIndex: 'none' },
-              
               restore: {},
             }
           },
@@ -137,7 +136,9 @@
       }
 
       document.getElementById("productSelect").addEventListener("change", ()=> {
-        currentIndex = 0;
+        const type = document.getElementById("productSelect").value;
+        const filtered = filterByType(type);
+        currentIndex = filtered.length > 0 ? filtered.length - 1 : 0; // 切換產品後顯示最新
         updateChart();
       });
 
@@ -151,8 +152,12 @@
         updateChart();
       });
 
-      // 初始 render
+      // 初始 render (預設顯示最新一筆)
+      const type = document.getElementById("productSelect").value;
+      const filtered = filterByType(type);
+      currentIndex = filtered.length > 0 ? filtered.length - 1 : 0;
       updateChart();
+
       window.addEventListener("resize", ()=>chart.resize());
     </script>
   </body>

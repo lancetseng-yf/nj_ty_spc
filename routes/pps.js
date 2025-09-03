@@ -35,10 +35,9 @@ function labelType(lasercode) {
   }
 }
 
-router.get("/", async (req, res) => {
+router.get("/batch", async (req, res) => {
   let modelArray = [];
   let rawModel = modelJson || {};
-  const viewType = req.query.view || "batch"; // 預設 batch，可傳 ?view=single
 
   try {
     const dataFromDb = await DiecastingEigenvalueData.findAll({
@@ -47,7 +46,7 @@ router.get("/", async (req, res) => {
         position: { [Op.ne]: null },
         casting_pressure: { [Op.ne]: null },
       },
-      limit: 50,
+      limit: 7,
       order: [["diecasting_eigenvalue_data_id", "DESC"]],
     });
 
@@ -69,20 +68,67 @@ router.get("/", async (req, res) => {
       return {
         ...rawModel,
         diecasting_eigenvalue_data_id: item.diecasting_eigenvalue_data_id,
-        pressure: normalizeArray(rawPressure, 15),
+        pressure: normalizeArray(rawPressure, 1),
         position: rawPosition,
-        speed: normalizeArray(rawSpeed, 15),
+        speed: normalizeArray(rawSpeed, 1),
         sm: item.sm ?? 0,
         dt: item.dt || rawModel.dt,
         type: typeLabel,
       };
     });
 
-    console.log(
-      `Rendering pps-${viewType} with data count:`,
-      modelArray.length
-    );
-    res.render(`pps-${viewType}`, { models: modelArray });
+    res.render(`pps-batch`, { models: modelArray });
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send("Server Error");
+  }
+});
+
+router.get("/single", async (req, res) => {
+  let modelArray = [];
+  let rawModel = modelJson || {};
+
+  try {
+    const dataFromDbDesc = await DiecastingEigenvalueData.findAll({
+      where: {
+        speed: { [Op.ne]: null },
+        position: { [Op.ne]: null },
+        casting_pressure: { [Op.ne]: null },
+      },
+      limit: 100,
+      order: [["diecasting_eigenvalue_data_id", "DESC"]],
+    });
+
+    const dataFromDb = dataFromDbDesc.reverse();
+
+    modelArray = dataFromDb.map((item) => {
+      const rawPressure = Array.isArray(item.casting_pressure)
+        ? item.casting_pressure
+        : convertStringToArray(item.casting_pressure);
+
+      const rawSpeed = Array.isArray(item.speed)
+        ? item.speed
+        : convertStringToArray(item.speed);
+
+      const rawPosition = Array.isArray(item.position)
+        ? item.position
+        : convertStringToArray(item.position);
+
+      const typeLabel = labelType(item.lasercode);
+
+      return {
+        ...rawModel,
+        diecasting_eigenvalue_data_id: item.diecasting_eigenvalue_data_id,
+        pressure: normalizeArray(rawPressure, 1),
+        position: rawPosition,
+        speed: normalizeArray(rawSpeed, 1),
+        sm: item.sm ?? 0,
+        dt: item.dt || rawModel.dt,
+        type: typeLabel,
+      };
+    });
+
+    res.render(`pps-single`, { models: modelArray });
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).send("Server Error");

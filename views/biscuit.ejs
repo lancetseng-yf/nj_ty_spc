@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Scatter: Time vs SM</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #f4f4f4;
+        padding: 20px;
+      }
+      h1 {
+        text-align: left;
+        margin: 0 0 20px 0;
+      }
+      #controls {
+        display: flex;
+        align-items: center;
+        margin: 10px 0 20px 0;
+      }
+      #controls label {
+        font-size: 16px;
+        margin-right: 10px;
+      }
+      #productSelect {
+        font-size: 16px;
+        padding: 5px 10px;
+        min-width: 120px;
+      }
+      #chart {
+        width: 100%;
+        height: 600px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Scatter: Time vs SM</h1>
+
+    <div id="controls">
+      <label for="productSelect"><b>Product:</b></label>
+      <select id="productSelect"></select>
+    </div>
+
+    <div id="chart"></div>
+
+    <script>
+      // === 後端傳入的資料 ===
+      window.models = <%- JSON.stringify(models) %>;
+
+      // === 每個產品對應的 mean / UCL / LCL ===
+      window.productConfig = {
+        LL: { mean: 30, ucl: 44, lcl: 22 },
+        LR: { mean: 450, ucl: 550, lcl: 350 },
+        ML: { mean: 650, ucl: 750, lcl: 550 },
+        MR: { mean: 700, ucl: 800, lcl: 600 }
+      };
+
+      // === 填充下拉框 ===
+      const productSelect = document.getElementById("productSelect");
+      Object.keys(window.productConfig).forEach(p => {
+        const option = document.createElement("option");
+        option.value = p;
+        option.textContent = p;
+        productSelect.appendChild(option);
+      });
+
+      // === ECharts 初始化 ===
+      const chart = echarts.init(document.getElementById("chart"));
+
+      function getChartOption(filteredData, config) {
+        const times = filteredData.map(d => new Date(d.dt).getTime());
+        const smValues = filteredData.map(d => Number(d.sm));
+        const minTime = Math.min(...times);
+        const maxTime = Math.max(...times);
+        const minY = 0;
+        const maxY = Math.max(...smValues, config.ucl + 50);
+
+        // 分組 scatter series
+        const normal = filteredData.filter(d => d.sm >= config.lcl && d.sm <= config.ucl)
+                                  .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
+        const below = filteredData.filter(d => d.sm < config.lcl)
+                                 .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
+        const above = filteredData.filter(d => d.sm > config.ucl)
+                                 .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
+
+        return {
+          legend: {
+            data: ["Normal", "Below LCL", "Above UCL", "Mean", "UCL", "LCL"],
+            top: 10,
+            textStyle: { fontSize: 16 }
+          },
+          tooltip: {
+            trigger: "item",
+            formatter: p => {
+              if (p.componentType === "markLine") return `${p.name}: ${p.value}`;
+              const d = new Date(p.value[0]);
+              const pad = n => (n < 10 ? "0" + n : n);
+              const dateStr = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ` +
+                              `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+              return `<b>ID:</b> ${p.data.id}<br/><b>Time:</b> ${dateStr}<br/><b>SM:</b> ${p.value[1]}`;
+            }
+          },
+          xAxis: {
+            type: "time",
+            name: "Time",
+            min: minTime,
+            max: maxTime,
+            axisLabel: {
+              fontSize: 18,
+              formatter: val => {
+                const d = new Date(val);
+                const pad = n => (n < 10 ? "0" + n : n);
+                return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+              }
+            },
+            splitLine: { show: true }
+          },
+          yAxis: {
+            type: "value",
+            name: "SM",
+            min: minY,
+            max: maxY,
+            axisLabel: { fontSize: 18 }
+          },
+          series: [
+            { name: "Normal", type: "scatter", symbolSize: 12, data: normal, itemStyle: { color: "blue" } },
+            { name: "Below LCL", type: "scatter", symbolSize: 12, data: below, itemStyle: { color: "orange" } },
+            { name: "Above UCL", type: "scatter", symbolSize: 12, data: above, itemStyle: { color: "red" } },
+            {
+              name: "Mean",
+              type: "line",
+              data: [],
+              markLine: {
+                symbol: "none",
+                lineStyle: { color: "green", type: "dashed", width: 3 },
+                data: [{ name: "Mean", yAxis: config.mean }]
+              }
+            },
+            {
+              name: "UCL",
+              type: "line",
+              data: [],
+              markLine: {
+                symbol: "none",
+                lineStyle: { color: "red", type: "dashed", width: 3 },
+                data: [{ name: "UCL", yAxis: config.ucl }]
+              }
+            },
+            {
+              name: "LCL",
+              type: "line",
+              data: [],
+              markLine: {
+                symbol: "none",
+                lineStyle: { color: "red", type: "dashed", width: 3 },
+                data: [{ name: "LCL", yAxis: config.lcl }]
+              }
+            }
+          ]
+        };
+      }
+
+      // === 初始顯示 ===
+      let selectedProduct = "LL";
+      function renderChart() {
+        const config = window.productConfig[selectedProduct];
+        const filtered = window.models.filter(m => m.type === selectedProduct);
+        chart.setOption(getChartOption(filtered, config));
+      }
+
+      productSelect.addEventListener("change", e => {
+        selectedProduct = e.target.value;
+        renderChart();
+      });
+
+      renderChart();
+      window.addEventListener("resize", () => chart.resize());
+    </script>
+  </body>
+</html>
