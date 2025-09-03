@@ -13,7 +13,7 @@ const sanitize = (s) =>
     .replace(/[^\w]+/g, "_")
     .replace(/^_+|_+$/g, "");
 
-router.get("/test", async (req, res) => {
+router.get("/test/5555", async (req, res) => {
   return res.send("Load data from Excel to Postgres (Sequelize)");
 });
 
