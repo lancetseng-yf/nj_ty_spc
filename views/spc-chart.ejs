@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SPC管制圖</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+      #spcChart {
+        width: 100%;
+        height: 500px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>SPC管制圖範例</h2>
+    <div id="spcChart"></div>
+
+    <script>
+      // 模擬數據
+      const sampleCount = 20;
+      const mean = 50;
+      const sigma = 5;
+
+      const data = Array.from(
+        { length: sampleCount },
+        () => +(mean + (Math.random() - 0.5) * sigma * 2).toFixed(2)
+      );
+
+      const xData = Array.from({ length: sampleCount }, (_, i) => i + 1);
+
+      const UCL = data.reduce((a, b) => a + b) / data.length + 3 * sigma;
+      const LCL = data.reduce((a, b) => a + b) / data.length - 3 * sigma;
+      const CL = data.reduce((a, b) => a + b) / data.length;
+
+      const chart = echarts.init(document.getElementById("spcChart"));
+
+      chart.setOption({
+        title: {
+          text: "SPC 管制圖",
+          left: "center",
+        },
+        tooltip: {
+          trigger: "axis",
+        },
+        xAxis: {
+          type: "category",
+          data: xData,
+          name: "樣本序號",
+        },
+        yAxis: {
+          type: "value",
+          name: "測量值",
+        },
+        series: [
+          {
+            name: "測量值",
+            type: "line",
+            data: data,
+            smooth: false,
+            symbol: "circle",
+            lineStyle: { width: 2 },
+            itemStyle: { color: "#5470C6" },
+          },
+          {
+            name: "中心線(CL)",
+            type: "line",
+            data: Array(sampleCount).fill(CL),
+            lineStyle: { type: "dashed", color: "green", width: 2 },
+            showSymbol: false,
+          },
+          {
+            name: "上管制線(UCL)",
+            type: "line",
+            data: Array(sampleCount).fill(UCL),
+            lineStyle: { type: "dashed", color: "red", width: 2 },
+            showSymbol: false,
+          },
+          {
+            name: "下管制線(LCL)",
+            type: "line",
+            data: Array(sampleCount).fill(LCL),
+            lineStyle: { type: "dashed", color: "red", width: 2 },
+            showSymbol: false,
+          },
+        ],
+      });
+    </script>
+  </body>
+</html>
