@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../db2");
 const { tr } = require("date-fns/locale");
-const { parse, isValid } = require('date-fns');
+const { parse, isValid } = require("date-fns");
 
 const DiecastingEigenvalueData = sequelize.define(
   "DiecastingEigenvalueData",
@@ -9,6 +9,8 @@ const DiecastingEigenvalueData = sequelize.define(
     diecasting_eigenvalue_data_id: {
       type: DataTypes.BIGINT,
       allowNull: true,
+      allowNull: false,
+      primaryKey: true, // 將此欄位設定為主鍵
     },
     no: {
       type: DataTypes.STRING,
@@ -248,6 +250,10 @@ const DiecastingEigenvalueData = sequelize.define(
     createdAt: false,
     updatedAt: false, // Disable updatedAt as it's not in your schema
     underscored: false, // Use camelCase for attributes (match your column names)
+    id: false, // Disable the automatic addition of the id field
+    attributes: {
+      exclude: ["id"],
+    },
   }
 );
 

@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  # Node.js 應用程式服務
+  app:
+    # 告訴 Docker Compose 透過當前目錄的 Dockerfile 建立映像檔
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # 設定容器名稱，方便辨識
+    container_name: ty-data-visualization
+    # 將主機的 3000 port 映射到容器的 3000 port
+    # 這樣你就可以透過 http://localhost:3000 存取你的應用程式
+    ports:
+      - "3000:3000"
+    # 將本地的專案目錄掛載到容器內，這是實現 Nodemon 熱更新的關鍵
+    volumes:
+      - .:/usr/src/app
+      # 排除 node_modules 目錄，避免本地依賴覆蓋容器內的依賴
+      - /usr/src/app/node_modules
+    # 載入開發環境變數檔案
+    # 容器內的應用程式會自動讀取這些變數
+    env_file:
+      - .env.development

@@ -6,7 +6,7 @@ const isProduction = process.env.NODE_ENV === "production";
 const sequelizeConfig = {
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
-  dialect: process.env.DB_DIALECT,
+  dialect: process.env.DB_DIALECT || "postgres",
   pool: {
     max: 5,
     min: 0,
