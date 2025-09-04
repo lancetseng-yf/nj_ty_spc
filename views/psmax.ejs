@@ -58,10 +58,13 @@
       style="text-align: left; margin: 15px 0; font-size: 18px"
     >
       <label for="productSelect"><b>Select Product:</b></label>
-      <select
-        id="productSelect"
-        style="font-size: 18px; padding: 5px 10px"
-      ></select>
+      <select id="productSelect" style="font-size: 18px; padding: 5px 10px">
+        <% ["LL","LR","ML","MR","ZP"].forEach(p => { %>
+          <option value="<%= p %>" <%= p === type ? "selected" : "" %>>
+            <%= p %>
+          </option>
+        <% }) %>
+      </select>
     </div>
 
     <div id="chart"></div>
@@ -83,19 +86,21 @@
 
     <script>
       const models = <%- JSON.stringify(models) %>;
+      const currentType = "<%= type %>";
+
       const productList = [
         { productName: "LL", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
         { productName: "LR", highSpeed: { target: 450, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
         { productName: "ML", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 720, tolerance: 50 } },
-        { productName: "MR", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 750, tolerance: 50 } }
+        { productName: "MR", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 750, tolerance: 50 } },
+        { productName: "ZP", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 700, tolerance: 50 } }
       ];
 
+      // 綁定選單 reload 頁面
       const productSelect = document.getElementById("productSelect");
-      productList.forEach((p) => {
-        const option = document.createElement("option");
-        option.value = p.productName;
-        option.textContent = p.productName;
-        productSelect.appendChild(option);
+      productSelect.addEventListener("change", (e) => {
+        const selected = e.target.value;
+        window.location.href = `/psmax/?type=${selected}`;
       });
 
       const scatterData = models.map((m) => [
@@ -116,16 +121,10 @@
         const yMax = Math.max(...pressures, 0);
         let markLine = null;
         if (productConfig) {
-          const sMin =
-            productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
-          const sMax =
-            productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
-          const pMin =
-            productConfig.castingPressure.target -
-            productConfig.castingPressure.tolerance;
-          const pMax =
-            productConfig.castingPressure.target +
-            productConfig.castingPressure.tolerance;
+          const sMin = productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
+          const sMax = productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
+          const pMin = productConfig.castingPressure.target - productConfig.castingPressure.tolerance;
+          const pMax = productConfig.castingPressure.target + productConfig.castingPressure.tolerance;
           markLine = {
             silent: true,
             lineStyle: { type: "dashed", color: "red" },
@@ -134,21 +133,14 @@
         }
         return {
           title: { text: "Scatter: Max Speed vs Max Pressure", left: "center" },
-          // --- ✨修改處：自訂Tooltip內容 ---
           tooltip: {
             trigger: "item",
             formatter: function (params) {
-              // params.data 就是 scatterData 中的單筆數據陣列
-              // [timestamp, max_speed, max_pressure, id, type]
               const timestamp = params.data[0];
               const speed = params.data[1];
               const pressure = params.data[2];
               const id = params.data[3];
-
-              // 重複使用您已有的 formatTime 函式
               const formattedTime = formatTime(timestamp);
-
-              // 回傳 HTML 字串來自訂 tooltip 內容
               return `
                 <b>ID:</b> ${id}<br/>
                 <b>Time:</b> ${formattedTime}<br/>
@@ -157,36 +149,25 @@
               `;
             },
           },
-          // --------------------------
           xAxis: {
             type: "value",
-            name: "Max Speed",
+            name: "Max Speed(cm/s)",
             min: 0,
             max: xMax + 100,
             nameLocation: "middle",
             nameGap: 30,
-            nameTextStyle: {
-              fontSize: 20,
-              fontWeight: "bold",
-            },
-            axisLabel: {
-              fontSize: 20,
-            },
+            nameTextStyle: { fontSize: 20, fontWeight: "bold" },
+            axisLabel: { fontSize: 20 },
           },
           yAxis: {
             type: "value",
-            name: "Max Pressure",
+            name: "Max Pressure(bar)",
             min: 0,
             max: yMax + 100,
             nameLocation: "middle",
             nameGap: 40,
-            nameTextStyle: {
-              fontSize: 16,
-              fontWeight: "bold",
-            },
-            axisLabel: {
-              fontSize: 20,
-            },
+            nameTextStyle: { fontSize: 20, fontWeight: "bold" },
+            axisLabel: { fontSize: 20 },
           },
           series: [
             {
@@ -214,11 +195,7 @@
         const pMax = p.castingPressure.target + p.castingPressure.tolerance;
 
         const okCount = pData.filter(
-          (d) =>
-            d[1] >= sMin &&
-            d[1] <= sMax &&
-            d[2] >= pMin &&
-            d[2] <= pMax
+          (d) => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax
         ).length;
         const ngCount = total - okCount;
 
@@ -228,9 +205,7 @@
           <td>Warm-Up</td>
           <td>${ngCount}</td>
           <td>${total}</td>
-          <td>${
-            total ? ((ngCount / total) * 100).toFixed(2) + "%" : "0.00%"
-          }</td>
+          <td>${total ? ((ngCount / total) * 100).toFixed(2) + "%" : "0.00%"}</td>
         `;
         statsTableBody.appendChild(tr);
         const tr2 = document.createElement("tr");
@@ -239,14 +214,11 @@
           <td>Normal</td>
           <td>${okCount}</td>
           <td>${total}</td>
-          <td>${
-            total ? ((okCount / total) * 100).toFixed(2) + "%" : "0.00%"
-          }</td>
+          <td>${total ? ((okCount / total) * 100).toFixed(2) + "%" : "0.00%"}</td>
         `;
         statsTableBody.appendChild(tr2);
       }
 
-      // 時間滑軌
       const times = scatterData.map((d) => d[0]);
       const minTime = Math.min(...times);
       const maxTime = Math.max(...times);
@@ -264,14 +236,12 @@
       function formatTime(ms) {
         const d = new Date(+ms);
         const pad = (n) => (n < 10 ? "0" + n : n);
-        return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(
-          d.getDate()
-        )} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
       }
 
-      // 預設選中第一個產品
-      productSelect.value = productList[0].productName;
-      let selectedProduct = productList[0];
+      // 選到當前 product
+      let selectedProduct = productList.find((p) => p.productName === currentType) || productList[0];
+      productSelect.value = selectedProduct.productName;
 
       function refreshChart() {
         let filtered = scatterData.filter(
@@ -286,15 +256,7 @@
       }
 
       slider.noUiSlider.on("update", () => {
-        rangeLabel.textContent = `Time: ${formatTime(
-          slider.noUiSlider.get()[0]
-        )} ~ ${formatTime(slider.noUiSlider.get()[1])}`;
-        refreshChart();
-      });
-
-      productSelect.addEventListener("change", (e) => {
-        selectedProduct =
-          productList.find((p) => p.productName === e.target.value) || null;
+        rangeLabel.textContent = `Time: ${formatTime(slider.noUiSlider.get()[0])} ~ ${formatTime(slider.noUiSlider.get()[1])}`;
         refreshChart();
       });
 

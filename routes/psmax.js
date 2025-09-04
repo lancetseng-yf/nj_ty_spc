@@ -4,15 +4,36 @@ const DiecastingEigenvalueData = require("../models/diecasting_eigenvalue_data")
 const modelJson = require("../models/psmax_model.json");
 const { Op } = require("sequelize");
 
+function getLaserCode(label) {
+  if (!label || typeof label !== "string") {
+    return "";
+  }
+
+  // 使用一個映射表（Map）來反轉 key-value 關係，這比 switch case 效率更高且更易讀
+  const codeMap = new Map([
+    ["LR", "887866302"],
+    ["LL", "887866402"],
+    ["MR", "886194201"],
+    ["ML", "886194301"],
+    ["ZP", "886194401"],
+  ]);
+
+  return codeMap.get(label.toUpperCase()) || "";
+}
+
 router.get("/", async (req, res) => {
   try {
     let modelArray = [];
     let rawModel = modelJson || {};
+    const typeSelect = req.query.type || "LL";
+    const lasercode = getLaserCode(typeSelect);
+
     const dataFromDb = await DiecastingEigenvalueData.findAll({
       where: {
         speed: { [Op.ne]: null },
         position: { [Op.ne]: null },
         casting_pressure: { [Op.ne]: null },
+        lasercode: { [Op.like]: `%${lasercode}%` },
       },
       limit: 1000,
       order: [["diecasting_eigenvalue_data_id", "DESC"]],
@@ -24,7 +45,6 @@ router.get("/", async (req, res) => {
     }
 
     function safeMax(arr) {
-      console.log("Array for max calculation:", arr);
       if (!Array.isArray(arr) || arr.length === 0) return 0;
       return Math.max(...arr);
     }
@@ -76,10 +96,9 @@ router.get("/", async (req, res) => {
       modelArray.push(model);
     });
 
-    console.log("Model Array:", modelArray);
     // res.send(modelArray);
     // Send to EJS
-    res.render("psmax", { models: modelArray });
+    res.render("psmax", { models: modelArray, type: typeSelect });
   } catch (err) {
     console.error("Error fetching data:", err);
     res.status(500).send("Server Error");
