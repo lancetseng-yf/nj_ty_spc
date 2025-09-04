@@ -39,7 +39,13 @@
 
     <div id="controls">
       <label for="productSelect"><b>Product:</b></label>
-      <select id="productSelect"></select>
+      <select id="productSelect">
+        <% ["LL","LR","ML","MR","ZP"].forEach(p => { %>
+          <option value="<%= p %>" <%= p === type ? "selected" : "" %>>
+            <%= p %>
+          </option>
+        <% }) %>
+      </select>
     </div>
 
     <div id="chart"></div>
@@ -47,32 +53,25 @@
     <script>
       // === 後端傳入的資料 ===
       window.models = <%- JSON.stringify(models) %>;
+      const currentType = "<%= type %>";
 
       // === 每個產品對應的 mean / UCL / LCL ===
+      const mean = 38;
+      const ucl = mean + 6;
+      const lcl = mean - 6;
       window.productConfig = {
-        LL: { mean: 30, ucl: 44, lcl: 22 },
-        LR: { mean: 450, ucl: 550, lcl: 350 },
-        ML: { mean: 650, ucl: 750, lcl: 550 },
-        MR: { mean: 700, ucl: 800, lcl: 600 }
+        LL: { mean: mean, ucl: ucl, lcl: lcl },
+        LR: { mean: mean, ucl: ucl, lcl: lcl },
+        ML: { mean: mean, ucl: ucl, lcl: lcl },
+        MR: { mean: mean, ucl: ucl, lcl: lcl },
+        ZP: { mean: mean, ucl: ucl, lcl: lcl }
       };
-
-      // === 填充下拉框 ===
-      const productSelect = document.getElementById("productSelect");
-      Object.keys(window.productConfig).forEach(p => {
-        const option = document.createElement("option");
-        option.value = p;
-        option.textContent = p;
-        productSelect.appendChild(option);
-      });
 
       // === ECharts 初始化 ===
       const chart = echarts.init(document.getElementById("chart"));
 
       function getChartOption(filteredData, config) {
-        const times = filteredData.map(d => new Date(d.dt).getTime());
         const smValues = filteredData.map(d => Number(d.sm));
-        const minTime = Math.min(...times);
-        const maxTime = Math.max(...times);
         const minY = 0;
         const maxY = Math.max(...smValues, config.ucl + 50);
 
@@ -86,7 +85,14 @@
 
         return {
           legend: {
-            data: ["Normal", "Below LCL", "Above UCL", "Mean", "UCL", "LCL"],
+            data: [
+              { name: "Normal", icon: "circle" },
+              { name: "Below LCL", icon: "circle" },
+              { name: "Above UCL", icon: "circle" },
+              { name: "Mean", icon: "rect" },
+              { name: "UCL", icon: "rect" },
+              { name: "LCL", icon: "rect" }
+            ],
             top: 10,
             textStyle: { fontSize: 16 }
           },
@@ -101,13 +107,23 @@
               return `<b>ID:</b> ${p.data.id}<br/><b>Time:</b> ${dateStr}<br/><b>SM:</b> ${p.value[1]}`;
             }
           },
+           dataZoom: [{ type: "inside", start: 0, end: 100 }],
+             toolbox: {
+            show: true,
+            feature: {
+              dataZoom: { yAxisIndex: "none" },
+              restore: {},
+            },
+          },
+
+          
           xAxis: {
             type: "time",
             name: "Time",
             axisLabel: {
               fontSize: 18,
-               interval: 'auto',
-                rotate: 30,
+              interval: "auto",
+              rotate: 30,
               formatter: val => {
                 const d = new Date(val);
                 const pad = n => (n < 10 ? "0" + n : n);
@@ -115,11 +131,11 @@
               }
             },
             splitLine: { show: true },
-            minInterval: 24 * 60 * 60 * 1000 // 1 day in milliseconds
+            minInterval: 24 * 60 * 60 * 1000 // 1 day
           },
           yAxis: {
             type: "value",
-            name: "SM",
+            name: "SM(mm)",
             min: minY,
             max: maxY,
             axisLabel: { fontSize: 18 }
@@ -136,7 +152,8 @@
                 symbol: "none",
                 lineStyle: { color: "green", type: "dashed", width: 3 },
                 data: [{ name: "Mean", yAxis: config.mean }]
-              }
+              },
+              itemStyle: { color: "green" }
             },
             {
               name: "UCL",
@@ -146,7 +163,8 @@
                 symbol: "none",
                 lineStyle: { color: "red", type: "dashed", width: 3 },
                 data: [{ name: "UCL", yAxis: config.ucl }]
-              }
+              },
+              itemStyle: { color: "red" }
             },
             {
               name: "LCL",
@@ -154,29 +172,30 @@
               data: [],
               markLine: {
                 symbol: "none",
-                lineStyle: { color: "red", type: "dashed", width: 3 },
+                lineStyle: { color: "purple", type: "dashed", width: 3 },
                 data: [{ name: "LCL", yAxis: config.lcl }]
-              }
+              },
+              itemStyle: { color: "purple" }
             }
           ]
         };
       }
 
       // === 初始顯示 ===
-      let selectedProduct = "LL";
       function renderChart() {
-        const config = window.productConfig[selectedProduct];
-        const filtered = window.models.filter(m => m.type === selectedProduct);
+        const config = window.productConfig[currentType];
+        const filtered = window.models.filter(m => m.type === currentType);
         chart.setOption(getChartOption(filtered, config));
       }
 
-      productSelect.addEventListener("change", e => {
-        selectedProduct = e.target.value;
-        renderChart();
-      });
-
       renderChart();
       window.addEventListener("resize", () => chart.resize());
+
+      // === 綁定選單 reload 頁面 ===
+      document.getElementById("productSelect").addEventListener("change", e => {
+        const selected = e.target.value;
+        window.location.href = `/biscuit?type=${selected}`;
+      });
     </script>
   </body>
 </html>

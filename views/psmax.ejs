@@ -100,7 +100,7 @@
       const productSelect = document.getElementById("productSelect");
       productSelect.addEventListener("change", (e) => {
         const selected = e.target.value;
-        window.location.href = `/psmax/?type=${selected}`;
+        window.location.href = `/psmax?type=${selected}`;
       });
 
       const scatterData = models.map((m) => [

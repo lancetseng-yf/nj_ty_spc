@@ -4,9 +4,28 @@ const DiecastingEigenvalueData = require("../models/diecasting_eigenvalue_data")
 const modelJson = require("../models/biscuit_thick_model.json");
 const { Op } = require("sequelize");
 
+function getLaserCode(label) {
+  if (!label || typeof label !== "string") {
+    return "";
+  }
+
+  // 使用一個映射表（Map）來反轉 key-value 關係，這比 switch case 效率更高且更易讀
+  const codeMap = new Map([
+    ["LR", "887866302"],
+    ["LL", "887866402"],
+    ["MR", "886194201"],
+    ["ML", "886194301"],
+    ["ZP", "886194401"],
+  ]);
+
+  return codeMap.get(label.toUpperCase()) || "";
+}
+
 router.get("/", async (req, res) => {
   let modelArray = [];
   let rawModel = modelJson || {};
+  const typeSelect = req.query.type || "LL"; // 預設 LL
+  const lasercode = getLaserCode(typeSelect);
 
   try {
     // fetch data
@@ -15,8 +34,9 @@ router.get("/", async (req, res) => {
         speed: { [Op.ne]: null },
         position: { [Op.ne]: null },
         casting_pressure: { [Op.ne]: null },
+        lasercode: { [Op.like]: `%${lasercode}%` },
       },
-      limit: 2000,
+      limit: 500,
       order: [["diecasting_eigenvalue_data_id", "DESC"]],
     });
 
@@ -57,7 +77,7 @@ router.get("/", async (req, res) => {
 
     // Pass data to view correctly
     // res.send(modelArray);
-    res.render("biscuit", { models: modelArray });
+    res.render("biscuit", { models: modelArray, type: typeSelect });
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).send("Server Error");
