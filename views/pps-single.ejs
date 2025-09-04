@@ -61,6 +61,23 @@
       legend: { data: ["Pressure", "Position", "Speed"] ,
         textStyle: { fontSize: 20 }  // 🔹圖例字體大小
       },
+      tooltip: {
+            trigger: "axis",
+            formatter: function (params) {
+              let idx = params[0].dataIndex + 1;
+              let tooltipText = `Index: ${idx}<br/>`;
+              tooltipText += `Biscuit: ${model.sm}<br/>`;
+              params.forEach((p) => {
+                let displayValue =
+                  p.seriesName === "Pressure" || p.seriesName === "Speed"
+                    ? p.data / 15
+                    : p.data;
+                tooltipText += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color}"></span>`;
+                tooltipText += `${p.seriesName}: ${displayValue}<br/>`;
+              });
+              return tooltipText;
+            },
+          },
         toolbox: {
             show: true,
             feature: {
