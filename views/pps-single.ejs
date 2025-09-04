@@ -34,170 +34,73 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
   </head>
   <body>
-    <h1>Diecasting Eigenvalue Chart</h1>
+    <h1>Diecasting Eigenvalue Chart(1 Shot)</h1>
     <div id="controls">
       <label for="productSelect">Product: </label>
-      <select id="productSelect">
-        <% ["LL","LR","ML","MR"].forEach(p => { %>
-        <option value="<%= p %>"><%= p %></option>
-        <% }) %>
-      </select>
+     <select id="productSelect">
+  <% ["LL","LR","ML","MR"].forEach(p => { %>
+    <option value="<%= p %>" <%= p === type ? "selected" : "" %>>
+      <%= p %>
+    </option>
+  <% }) %>
+</select>
       <button id="prevBtn">上一個</button>
       <button id="nextBtn">下一個</button>
     </div>
     <div id="chart"></div>
 
-    <script>
-      const models = <%- JSON.stringify(models) %>;
-      const productList = ["LL", "LR", "ML", "MR"];
+   <script>
+  let models = <%- JSON.stringify(models) %>;
+  let currentIndex = models.length > 0 ? models.length - 1 : 0;
+  const chart = echarts.init(document.getElementById("chart"));
 
-      // 排序 by dt
-      models.sort((a, b) => new Date(a.dt) - new Date(b.dt));
+  function renderChart(model) {
+    if (!model) return;
+    const option = {
+      title: { text: `${model.type || "N/A"} - ${model.dt}` },
+      legend: { data: ["Pressure", "Position", "Speed"] },
+      xAxis: { type: "category", data: model.position.map((_, i) => i + 1) },
+      yAxis: { type: "value", min: 0 },
+      series: [
+        { name: "Pressure", type: "line", data: (model.pressure || []).map(v => v * 15) },
+        { name: "Position", type: "line", data: model.position || [] },
+        { name: "Speed", type: "line", data: (model.speed || []).map(v => v * 15) },
+      ],
+    };
+    chart.setOption(option);
+  }
 
-      let currentIndex = 0;
-      const chart = echarts.init(document.getElementById("chart"));
+  function updateChart() {
+    if (models.length === 0) {
+      chart.clear();
+      chart.setOption({ title: { text: "No Data" } });
+      return;
+    }
+    if (currentIndex >= models.length) currentIndex = models.length - 1;
+    if (currentIndex < 0) currentIndex = 0;
+    renderChart(models[currentIndex]);
+  }
 
-      function formatDateTime(dt) {
-        const d = new Date(dt);
-        const pad = (n) => (n < 10 ? "0" + n : n);
-        return (
-          d.getFullYear() +
-          "/" +
-          pad(d.getMonth() + 1) +
-          "/" +
-          pad(d.getDate()) +
-          " " +
-          pad(d.getHours()) +
-          ":" +
-          pad(d.getMinutes()) +
-          ":" +
-          pad(d.getSeconds())
-        );
-      }
+  // 🔹 切換產品時整頁 reload
+  function fetchDataByType(type) {
+    location.href = `/pps/single?type=${type}`;
+  }
 
-      function renderChart(model) {
-        if (!model) return;
-        const option = {
-          title: {
-            text: `${model.type || "N/A"} - ${formatDateTime(
-              model.dt
-            )} (ID: ${model.diecasting_eigenvalue_data_id})`,
-          },
-          tooltip: {
-            trigger: "axis",
-            formatter: function (params) {
-              let idx = params[0].dataIndex + 1;
-              let tooltipText = `Index: ${idx}<br/>`;
-              tooltipText += `Biscuit: ${model.sm}<br/>`;
-              params.forEach((p) => {
-                let displayValue =
-                  p.seriesName === "Pressure" || p.seriesName === "Speed"
-                    ? p.data / 15
-                    : p.data;
-                tooltipText += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color}"></span>`;
-                tooltipText += `${p.seriesName}: ${displayValue}<br/>`;
-              });
-              return tooltipText;
-            },
-          },
-          legend: { data: ["Pressure", "Position", "Speed"],
-             textStyle: {
-              fontSize: 20,
-              fontWeight: 'bold'
-            }
-           },
-          toolbox: {
-            show: true,
-            feature: {
-              dataZoom: { yAxisIndex: "none" },
-              restore: {},
-            },
-          },
-          dataZoom: [{ type: "inside", start: 0, end: 100 }],
-          xAxis: {
-            type: "category",
-            boundaryGap: false,
-            data: model.position.map((_, i) => i + 1),
-            // --- ✨修改處：放大X軸刻度字體 ---
-           
-            axisLabel: {
-              fontSize: 20,
-              
-               rotate: 30,
-            }
-            // ---------------------------------
-          },
-          yAxis: {
-            type: "value",
-            // --- ✨修改處：放大Y軸刻度字體 ---
-            axisLabel: {
-              fontSize: 20,
-             
-            },
-            min: 0,
-            // ---------------------------------
-          },
-          series: [
-            {
-              name: "Pressure",
-              type: "line",
-              data: (model.pressure || []).map((v) => v * 15),
-            },
-            { name: "Position", type: "line", data: model.position || [] },
-            {
-              name: "Speed",
-              type: "line",
-              data: (model.speed || []).map((v) => v * 15),
-            },
-          ],
-        };
-        chart.setOption(option);
-      }
+  document.getElementById("productSelect").addEventListener("change", () => {
+    const type = document.getElementById("productSelect").value;
+    fetchDataByType(type);
+  });
 
-      function filterByType(type) {
-        return models.filter((m) => m.type === type);
-      }
+  document.getElementById("prevBtn").addEventListener("click", () => {
+    currentIndex--;
+    updateChart();
+  });
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    currentIndex++;
+    updateChart();
+  });
 
-      function updateChart() {
-        const type = document.getElementById("productSelect").value;
-        const filtered = filterByType(type);
-        if (filtered.length === 0) {
-          chart.clear();
-          chart.setOption({ title: { text: `No data for ${type}` } });
-          return;
-        }
-        if (currentIndex >= filtered.length)
-          currentIndex = filtered.length - 1;
-        if (currentIndex < 0) currentIndex = 0;
-        renderChart(filtered[currentIndex]);
-      }
-
-      document
-        .getElementById("productSelect")
-        .addEventListener("change", () => {
-          const type = document.getElementById("productSelect").value;
-          const filtered = filterByType(type);
-          currentIndex = filtered.length > 0 ? filtered.length - 1 : 0; // 切換產品後顯示最新
-          updateChart();
-        });
-
-      document.getElementById("prevBtn").addEventListener("click", () => {
-        currentIndex--;
-        updateChart();
-      });
-
-      document.getElementById("nextBtn").addEventListener("click", () => {
-        currentIndex++;
-        updateChart();
-      });
-
-      // 初始 render (預設顯示最新一筆)
-      const type = document.getElementById("productSelect").value;
-      const filtered = filterByType(type);
-      currentIndex = filtered.length > 0 ? filtered.length - 1 : 0;
-      updateChart();
-
-      window.addEventListener("resize", () => chart.resize());
-    </script>
+  updateChart();
+</script>
   </body>
 </html>

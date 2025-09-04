@@ -35,6 +35,23 @@ function labelType(lasercode) {
   }
 }
 
+function getLaserCode(label) {
+  if (!label || typeof label !== "string") {
+    return "";
+  }
+
+  // 使用一個映射表（Map）來反轉 key-value 關係，這比 switch case 效率更高且更易讀
+  const codeMap = new Map([
+    ["LR", "887866302"],
+    ["LL", "887866402"],
+    ["MR", "886194201"],
+    ["ML", "886194301"],
+    ["ZP", "886194401"],
+  ]);
+
+  return codeMap.get(label.toUpperCase()) || "";
+}
+
 router.get("/batch", async (req, res) => {
   let modelArray = [];
   let rawModel = modelJson || {};
@@ -87,6 +104,8 @@ router.get("/batch", async (req, res) => {
 router.get("/single", async (req, res) => {
   let modelArray = [];
   let rawModel = modelJson || {};
+  const typeSelect = req.query.type || "LL";   // 預設 LL
+  const lasercode = getLaserCode(typeSelect);
 
   try {
     const dataFromDbDesc = await DiecastingEigenvalueData.findAll({
@@ -94,11 +113,13 @@ router.get("/single", async (req, res) => {
         speed: { [Op.ne]: null },
         position: { [Op.ne]: null },
         casting_pressure: { [Op.ne]: null },
+        lasercode: { [Op.like]: `%${lasercode}%` },
       },
       limit: 100,
       order: [["diecasting_eigenvalue_data_id", "DESC"]],
     });
 
+    // 反轉，讓時間順序從舊到新
     const dataFromDb = dataFromDbDesc.reverse();
 
     modelArray = dataFromDb.map((item) => {
@@ -128,7 +149,8 @@ router.get("/single", async (req, res) => {
       };
     });
 
-    res.render(`pps-single`, { models: modelArray });
+    // 把目前的 typeSelect 一起傳給 EJS，讓下拉選單自動選中
+    res.render("pps-single", { models: modelArray, type: typeSelect });
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).send("Server Error");
