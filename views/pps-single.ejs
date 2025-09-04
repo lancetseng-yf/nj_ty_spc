@@ -58,9 +58,35 @@
     if (!model) return;
     const option = {
       title: { text: `${model.type || "N/A"} - ${model.dt}` },
-      legend: { data: ["Pressure", "Position", "Speed"] },
-      xAxis: { type: "category", data: model.position.map((_, i) => i + 1) },
-      yAxis: { type: "value", min: 0 },
+      legend: { data: ["Pressure", "Position", "Speed"] ,
+        textStyle: { fontSize: 20 }  // 🔹圖例字體大小
+      },
+       xAxis: {
+            type: "category",
+            boundaryGap: false,
+            data: model.position.map((_, i) => i + 1),
+            // --- ✨修改處：放大X軸刻度字體 ---
+           
+            axisLabel: {
+              fontSize: 20,
+              
+               rotate: 30,
+            }
+            // ---------------------------------
+          },
+          yAxis: {
+            type: "value",
+            nameTextStyle: { fontSize: 20, rotate:90 },       // 🔹Y軸名稱字體大小
+
+            // --- ✨修改處：放大Y軸刻度字體 ---
+            axisLabel: {
+              fontSize: 20,
+             
+            },
+            min: 0,
+            // ---------------------------------
+          },
+
       series: [
         { name: "Pressure", type: "line", data: (model.pressure || []).map(v => v * 15) },
         { name: "Position", type: "line", data: model.position || [] },
