@@ -49,19 +49,22 @@
     </div>
     <div id="chart"></div>
 
-   <script>
-  let models = <%- JSON.stringify(models) %>;
-  let currentIndex = models.length > 0 ? models.length - 1 : 0;
-  const chart = echarts.init(document.getElementById("chart"));
+    <script>
+      // --- Backend Data ---
+      const models = <%- JSON.stringify(models) %>;
+      let currentIndex = models.length > 0 ? models.length - 1 : 0;
+      const chart = echarts.init(document.getElementById("chart"));
 
-  function renderChart(model) {
-    if (!model) return;
-    const option = {
-      title: { text: `${model.type || "N/A"} - ${model.dt}` },
-      legend: { data: ["Pressure", "Position", "Speed"] ,
-        textStyle: { fontSize: 20 }  // 🔹圖例字體大小
-      },
-      tooltip: {
+      // --- Chart Option Builder ---
+      function buildChartOption(model) {
+        if (!model) return {};
+        return {
+          title: { text: `${model.type || "N/A"} - ${model.dt}` },
+          legend: {
+            data: ["Pressure", "Position", "Speed"],
+            textStyle: { fontSize: 20 }
+          },
+          tooltip: {
             trigger: "axis",
             formatter: function (params) {
               let idx = params[0].dataIndex + 1;
@@ -78,82 +81,66 @@
               return tooltipText;
             },
           },
-        toolbox: {
+          toolbox: {
             show: true,
             feature: {
               dataZoom: { yAxisIndex: "none" },
               restore: {},
             },
           },
-
-       dataZoom: [{ type: "inside", start: 0, end: 100 }],
-            
-       xAxis: {
+          dataZoom: [{ type: "inside", start: 0, end: 100 }],
+          xAxis: {
             type: "category",
             boundaryGap: false,
             data: model.position.map((_, i) => i + 1),
-            // --- ✨修改處：放大X軸刻度字體 ---
-           
             axisLabel: {
               fontSize: 20,
-              
-               rotate: 30,
+              rotate: 30,
             }
-            // ---------------------------------
           },
           yAxis: {
             type: "value",
-            nameTextStyle: { fontSize: 20, rotate:90 },       // 🔹Y軸名稱字體大小
-
-            // --- ✨修改處：放大Y軸刻度字體 ---
-            axisLabel: {
-              fontSize: 20,
-             
-            },
+            nameTextStyle: { fontSize: 20, rotate: 90 },
+            axisLabel: { fontSize: 20 },
             min: 0,
-            // ---------------------------------
           },
+          series: [
+            { name: "Pressure", type: "line", data: (model.pressure || []).map(v => v * 15) },
+            { name: "Position", type: "line", data: model.position || [] },
+            { name: "Speed", type: "line", data: (model.speed || []).map(v => v * 15) },
+          ],
+        };
+      }
 
-      series: [
-        { name: "Pressure", type: "line", data: (model.pressure || []).map(v => v * 15) },
-        { name: "Position", type: "line", data: model.position || [] },
-        { name: "Speed", type: "line", data: (model.speed || []).map(v => v * 15) },
-      ],
-    };
-    chart.setOption(option);
-  }
+      // --- Chart Render ---
+      function renderChart() {
+        if (models.length === 0) {
+          chart.clear();
+          chart.setOption({ title: { text: "No Data" } });
+          return;
+        }
+        if (currentIndex >= models.length) currentIndex = models.length - 1;
+        if (currentIndex < 0) currentIndex = 0;
+        chart.setOption(buildChartOption(models[currentIndex]));
+      }
 
-  function updateChart() {
-    if (models.length === 0) {
-      chart.clear();
-      chart.setOption({ title: { text: "No Data" } });
-      return;
-    }
-    if (currentIndex >= models.length) currentIndex = models.length - 1;
-    if (currentIndex < 0) currentIndex = 0;
-    renderChart(models[currentIndex]);
-  }
+      // --- Product Change: reload page ---
+      document.getElementById("productSelect").addEventListener("change", () => {
+        const type = document.getElementById("productSelect").value;
+        location.href = `/pps/single?type=${type}`;
+      });
 
-  // 🔹 切換產品時整頁 reload
-  function fetchDataByType(type) {
-    location.href = `/pps/single?type=${type}`;
-  }
+      // --- Prev/Next navigation ---
+      document.getElementById("prevBtn").addEventListener("click", () => {
+        currentIndex--;
+        renderChart();
+      });
+      document.getElementById("nextBtn").addEventListener("click", () => {
+        currentIndex++;
+        renderChart();
+      });
 
-  document.getElementById("productSelect").addEventListener("change", () => {
-    const type = document.getElementById("productSelect").value;
-    fetchDataByType(type);
-  });
-
-  document.getElementById("prevBtn").addEventListener("click", () => {
-    currentIndex--;
-    updateChart();
-  });
-  document.getElementById("nextBtn").addEventListener("click", () => {
-    currentIndex++;
-    updateChart();
-  });
-
-  updateChart();
-</script>
+      renderChart();
+    </script>
   </body>
 </html>

@@ -51,31 +51,32 @@
     <div id="chart"></div>
 
     <script>
-      // === 後端傳入的資料 ===
+      // --- Backend Data ---
       window.models = <%- JSON.stringify(models) %>;
       const currentType = "<%= type %>";
 
-      // === 每個產品對應的 mean / UCL / LCL ===
-      const mean = 38;
-      const ucl = mean + 6;
-      const lcl = mean - 6;
+      // --- Product Config ---
+      const PRODUCT_MEAN = 38;
+      const PRODUCT_UCL = PRODUCT_MEAN + 6;
+      const PRODUCT_LCL = PRODUCT_MEAN - 6;
       window.productConfig = {
-        LL: { mean: mean, ucl: ucl, lcl: lcl },
-        LR: { mean: mean, ucl: ucl, lcl: lcl },
-        ML: { mean: mean, ucl: ucl, lcl: lcl },
-        MR: { mean: mean, ucl: ucl, lcl: lcl },
-        ZP: { mean: mean, ucl: ucl, lcl: lcl }
+        LL: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+        LR: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+        ML: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+        MR: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+        ZP: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL }
       };
 
-      // === ECharts 初始化 ===
+      // --- Chart Initialization ---
       const chart = echarts.init(document.getElementById("chart"));
 
-      function getChartOption(filteredData, config) {
+      // --- Chart Option Builder ---
+      function buildChartOption(filteredData, config) {
         const smValues = filteredData.map(d => Number(d.sm));
         const minY = 0;
         const maxY = Math.max(...smValues, config.ucl + 50);
 
-        // 分組 scatter series
+        // Grouped scatter series
         const normal = filteredData.filter(d => d.sm >= config.lcl && d.sm <= config.ucl)
                                   .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
         const below = filteredData.filter(d => d.sm < config.lcl)
@@ -107,16 +108,14 @@
               return `<b>ID:</b> ${p.data.id}<br/><b>Time:</b> ${dateStr}<br/><b>SM:</b> ${p.value[1]}`;
             }
           },
-           dataZoom: [{ type: "inside", start: 0, end: 100 }],
-             toolbox: {
+          dataZoom: [{ type: "inside", start: 0, end: 100 }],
+          toolbox: {
             show: true,
             feature: {
               dataZoom: { yAxisIndex: "none" },
               restore: {},
             },
           },
-
-          
           xAxis: {
             type: "time",
             name: "Time",
@@ -181,17 +180,17 @@
         };
       }
 
-      // === 初始顯示 ===
+      // --- Initial Render ---
       function renderChart() {
         const config = window.productConfig[currentType];
         const filtered = window.models.filter(m => m.type === currentType);
-        chart.setOption(getChartOption(filtered, config));
+        chart.setOption(buildChartOption(filtered, config));
       }
 
       renderChart();
       window.addEventListener("resize", () => chart.resize());
 
-      // === 綁定選單 reload 頁面 ===
+      // --- Bind Select & Reload ---
       document.getElementById("productSelect").addEventListener("change", e => {
         const selected = e.target.value;
         window.location.href = `/biscuit?type=${selected}`;

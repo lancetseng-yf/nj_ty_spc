@@ -84,10 +84,13 @@
       <tbody></tbody>
     </table>
 
+d
     <script>
+      // --- Backend Data ---
       const models = <%- JSON.stringify(models) %>;
       const currentType = "<%= type %>";
 
+      // --- Product Config ---
       const productList = [
         { productName: "LL", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
         { productName: "LR", highSpeed: { target: 450, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
@@ -96,13 +99,14 @@
         { productName: "ZP", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 700, tolerance: 50 } }
       ];
 
-      // 綁定選單 reload 頁面
+      // --- Bind Select & Reload ---
       const productSelect = document.getElementById("productSelect");
       productSelect.addEventListener("change", (e) => {
         const selected = e.target.value;
         window.location.href = `/psmax?type=${selected}`;
       });
 
+      // --- Data Preparation ---
       const scatterData = models.map((m) => [
         new Date(m.dt).getTime(),
         Number(m.max_speed),
@@ -114,7 +118,8 @@
       const chart = echarts.init(document.getElementById("chart"));
       const statsTableBody = document.querySelector("#statsTable tbody");
 
-      function getChartOption(data, productConfig) {
+      // --- Chart Option Builder ---
+      function buildChartOption(data, productConfig) {
         const speeds = data.map((d) => d[1]);
         const pressures = data.map((d) => d[2]);
         const xMax = Math.max(...speeds, 0);
@@ -182,10 +187,10 @@
         };
       }
 
+      // --- Stats Table Update ---
       function updateStatsTable(data) {
         statsTableBody.innerHTML = "";
         if (!selectedProduct) return;
-
         const p = selectedProduct;
         const pData = data.filter((d) => d[4] === p.productName);
         const total = pData.length;
@@ -193,12 +198,10 @@
         const sMax = p.highSpeed.target + p.highSpeed.tolerance;
         const pMin = p.castingPressure.target - p.castingPressure.tolerance;
         const pMax = p.castingPressure.target + p.castingPressure.tolerance;
-
         const okCount = pData.filter(
           (d) => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax
         ).length;
         const ngCount = total - okCount;
-
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${p.productName}</td>
@@ -219,10 +222,10 @@
         statsTableBody.appendChild(tr2);
       }
 
+      // --- Time Slider ---
       const times = scatterData.map((d) => d[0]);
       const minTime = Math.min(...times);
       const maxTime = Math.max(...times);
-
       const slider = document.getElementById("timeSlider");
       noUiSlider.create(slider, {
         start: [minTime, maxTime],
@@ -239,10 +242,11 @@
         return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
       }
 
-      // 選到當前 product
+      // --- Product Selection ---
       let selectedProduct = productList.find((p) => p.productName === currentType) || productList[0];
       productSelect.value = selectedProduct.productName;
 
+      // --- Chart Refresh ---
       function refreshChart() {
         let filtered = scatterData.filter(
           (d) =>
@@ -251,7 +255,7 @@
         );
         if (selectedProduct)
           filtered = filtered.filter((d) => d[4] === selectedProduct.productName);
-        chart.setOption(getChartOption(filtered, selectedProduct));
+        chart.setOption(buildChartOption(filtered, selectedProduct));
         updateStatsTable(filtered);
       }
 
@@ -260,7 +264,7 @@
         refreshChart();
       });
 
-      // 初始渲染
+      // --- Initial Render ---
       refreshChart();
       window.addEventListener("resize", () => chart.resize());
     </script>
