@@ -4,31 +4,42 @@ const DiecastingEigenvalueData = require("../models/diecasting_eigenvalue_data")
 const modelJson = require("../models/biscuit_thick_model.json");
 const { Op } = require("sequelize");
 
+// --- Utility Functions & Code Mapping ---
+const CODE_MAP = {
+  LR: "887866302",
+  LL: "887866402",
+  MR: "886194201",
+  ML: "886194301",
+  ZP: "886194401",
+};
+
 function getLaserCode(label) {
-  if (!label || typeof label !== "string") {
-    return "";
-  }
-
-  // 使用一個映射表（Map）來反轉 key-value 關係，這比 switch case 效率更高且更易讀
-  const codeMap = new Map([
-    ["LR", "887866302"],
-    ["LL", "887866402"],
-    ["MR", "886194201"],
-    ["ML", "886194301"],
-    ["ZP", "886194401"],
-  ]);
-
-  return codeMap.get(label.toUpperCase()) || "";
+  if (!label || typeof label !== "string") return "";
+  return CODE_MAP[label.toUpperCase()] || "";
 }
 
-router.get("/", async (req, res) => {
-  let modelArray = [];
-  let rawModel = modelJson || {};
-  const typeSelect = req.query.type || "LL"; // 預設 LL
-  const lasercode = getLaserCode(typeSelect);
+function labelType(lasercode) {
+  if (!lasercode || typeof lasercode !== "string") return "";
+  const codePart = lasercode.slice(2, 11);
+  return Object.entries(CODE_MAP).find(([label, code]) => code === codePart)?.[0] || "";
+}
 
+function mapDbItemToModel(item, rawModel) {
+  return {
+    ...rawModel,
+    diecasting_eigenvalue_data_id: item.diecasting_eigenvalue_data_id,
+    sm: item.sm ?? 0,
+    dt: item.dt || rawModel.dt,
+    type: labelType(item.lasercode || ""),
+  };
+}
+
+// --- Main Route ---
+router.get("/", async (req, res) => {
+  const rawModel = modelJson || {};
+  const typeSelect = req.query.type || "LL";
+  const lasercode = getLaserCode(typeSelect);
   try {
-    // fetch data
     const dataFromDb = await DiecastingEigenvalueData.findAll({
       where: {
         speed: { [Op.ne]: null },
@@ -39,44 +50,7 @@ router.get("/", async (req, res) => {
       limit: 500,
       order: [["diecasting_eigenvalue_data_id", "DESC"]],
     });
-
-    function labelType(lasercode) {
-      if (!lasercode || typeof lasercode !== "string") return "";
-
-      const codePart = lasercode.slice(2, 11); // SQL substring (3,9)
-
-      switch (codePart) {
-        case "887866302":
-          return "LR";
-        case "887866402":
-          return "LL";
-        case "886194201":
-          return "MR";
-        case "886194301":
-          return "ML";
-        case "886194401":
-          return "ZP";
-        default:
-          return "";
-      }
-    }
-
-    dataFromDb.forEach((item) => {
-      const typeLabel = labelType(item.lasercode || "");
-
-      const model = {
-        ...rawModel,
-        diecasting_eigenvalue_data_id: item.diecasting_eigenvalue_data_id,
-        sm: item.sm ?? 0,
-        dt: item.dt || rawModel.dt,
-        type: typeLabel,
-      };
-
-      modelArray.push(model);
-    });
-
-    // Pass data to view correctly
-    // res.send(modelArray);
+    const modelArray = dataFromDb.map((item) => mapDbItemToModel(item, rawModel));
     res.render("biscuit", { models: modelArray, type: typeSelect });
   } catch (error) {
     console.error("Error fetching data:", error);
