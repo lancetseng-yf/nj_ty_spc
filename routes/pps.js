@@ -59,26 +59,35 @@ function mapDbItemToModel(item, rawModel) {
   };
 }
 
-// --- Batch Route ---
-router.get("/batch", async (req, res) => {
+// --- Batch Page Route ---
+router.get("/batch", (req, res) => {
+  const typeSelect = req.query.type || "LL";
+  res.render("pps-batch", { type: typeSelect });
+});
+
+router.get("/batch/data", async (req, res) => {
   const rawModel = modelJson || {};
+  const typeSelect = req.query.type || "LL";
+  const lasercode = getLaserCode(typeSelect);
   try {
-    const dataFromDb = await DiecastingEigenvalueData.findAll({
+    const dataFromDbDesc = await DiecastingEigenvalueData.findAll({
       where: {
         speed: { [Op.ne]: null },
         position: { [Op.ne]: null },
         casting_pressure: { [Op.ne]: null },
+        lasercode: { [Op.like]: `%${lasercode}%` },
       },
-      limit: 7,
+      limit: 10,
       order: [["dt", "DESC"]],
     });
+    const dataFromDb = dataFromDbDesc.reverse();
     const modelArray = dataFromDb.map((item) =>
       mapDbItemToModel(item, rawModel)
     );
-    res.render("pps-batch", { models: modelArray });
+    res.json({ models: modelArray, type: typeSelect });
   } catch (error) {
     console.error("Error fetching data:", error);
-    res.status(500).send("Server Error");
+    res.status(500).json({ error: "Server Error" });
   }
 });
 
@@ -96,7 +105,7 @@ router.get("/single/data", async (req, res) => {
         lasercode: { [Op.like]: `%${lasercode}%` },
       },
       limit: 100,
-      order: [["diecasting_eigenvalue_data_id", "DESC"]],
+      order: [["dt", "DESC"]],
     });
     const dataFromDb = dataFromDbDesc.reverse();
     const modelArray = dataFromDb.map((item) =>

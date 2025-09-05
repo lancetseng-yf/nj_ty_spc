@@ -5,37 +5,112 @@
   <title>Max Pressure vs Max Speed</title>
   <style>
     body {
-      font-family: sans-serif;
-      background-color: #f4f4f4;
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f9fafb;
       padding: 20px;
+      margin: 0;
+      color: #333;
     }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 600;
+      color: #222;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    #productSelectBox {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #ffffff;
+      padding: 12px 16px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      font-size: 18px;
+      margin: 0 auto 20px auto;
+      width: fit-content;
+    }
+
+    #productSelect {
+      font-size: 18px;
+      padding: 6px 14px;
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      background: #fff;
+      color: #333;
+      cursor: pointer;
+      transition: border 0.2s ease-in-out;
+    }
+
+    #productSelect:hover {
+      border-color: #9ca3af;
+    }
+
     #chart {
       width: 100%;
       height: 600px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 10px;
     }
+
+    #rangeLabel {
+      text-align: center;
+      margin: 20px 0 15px 0;
+      font-weight: 600;
+      font-size: 20px;
+      color: #374151;
+    }
+
     #timeSlider {
       width: 90%;
-      margin: 20px auto;
+      margin: 0 auto 30px auto;
     }
+
     #statsTable {
-      width: 80%;
-      margin: 20px auto;
+      width: 85%;
+      margin: 0 auto 40px auto;
       border-collapse: collapse;
       text-align: center;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    #statsTable th,
-    #statsTable td {
-      border: 1px solid #ccc;
-      padding: 6px 10px;
-    }
-     #rangeLabel {
-        text-align: center;
-        margin-bottom: 20px;
-        font-weight: bold;
-        font-size: 20px;
-      }
 
+    #statsTable th {
+      background: #f3f4f6;
+      padding: 12px 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    #statsTable td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px 8px;
+      font-size: 15px;
+      color: #374151;
+    }
+
+    #statsTable tr:last-child td {
+      border-bottom: none;
+    }
+    #loading-spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 500;
+        color: #555;
+        height: 200px;
+      }
   </style>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css"/>
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
@@ -49,9 +124,9 @@
 
   <!-- Main Content (hidden until data loaded) -->
   <div id="main-content" style="display:none;">
-    <div id="productSelectBox" style="text-align: left; margin: 15px 0; font-size: 18px">
+    <div id="productSelectBox">
       <label for="productSelect"><b>Select Product:</b></label>
-      <select id="productSelect" style="font-size: 18px; padding: 5px 10px">
+      <select id="productSelect">
         <% ["LL","LR","ML","MR","ZP"].forEach(p => { %>
           <option value="<%= p %>" <%= p === type ? "selected" : "" %>><%= p %></option>
         <% }) %>
