@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Scatter: Time vs SM</title>
+  <title>Biscuit Thickness</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
   <style>
     body {
@@ -36,7 +36,7 @@
   </style>
 </head>
 <body>
-  <h1>Scatter: Time vs SM</h1>
+  <h1>Biscuit Thickness</h1>
 
   <div id="controls">
     <label for="productSelect"><b>Product:</b></label>
@@ -136,28 +136,31 @@
     }
 
     // --- Fetch & Render with Loading ---
-    function loadData(type) {
-      loadingEl.style.display = "block";
-      chartEl.style.display = "none";
+function loadData(type) {
+  loadingEl.style.display = "block";
+  chartEl.style.display = "none";
 
-     fetch(`/biscuit/data?type=${type}`)
-  .then(res => res.json())
-  .then(data => {
-    // if backend returns { models: [...] }
-    const models = data.models || [];
-    const filtered = models.filter(m => m.type === type);
+  fetch(`/biscuit/data?type=${type}`)
+    .then(res => res.json())
+    .then(data => {
+      const models = data.models || [];
+      const filtered = models.filter(m => m.type === type);
 
-    requestAnimationFrame(() => {
-      chart.setOption(buildChartOption(filtered, productConfig[type]));
+      // Show chart first
       loadingEl.style.display = "none";
       chartEl.style.display = "block";
+
+      // Render chart
+      chart.setOption(buildChartOption(filtered, productConfig[type]));
+
+      // Ensure resize works
+      requestAnimationFrame(() => chart.resize());
+    })
+    .catch(err => {
+      console.error(err);
+      loadingEl.textContent = "Failed to load data!";
     });
-  })
-  .catch(err => {
-    console.error(err);
-    loadingEl.textContent = "Failed to load data!";
-  });
-    }
+}
 
     // --- Initial Load ---
     loadData(currentType);
