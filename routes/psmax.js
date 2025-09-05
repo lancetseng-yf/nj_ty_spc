@@ -71,7 +71,7 @@ router.get("/data", async (req, res) => {
         lasercode: { [Op.like]: `%${lasercode}%` },
       },
       limit: 1000,
-      order: [["diecasting_eigenvalue_data_id", "DESC"]],
+      order: [["dt", "DESC"]],
     });
 
     const modelArray = dataFromDb.map((item) =>

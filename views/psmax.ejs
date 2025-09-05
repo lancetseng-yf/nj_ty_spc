@@ -28,6 +28,13 @@
       border: 1px solid #ccc;
       padding: 6px 10px;
     }
+     #rangeLabel {
+        text-align: center;
+        margin-bottom: 20px;
+        font-weight: bold;
+        font-size: 20px;
+      }
+
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css"/>
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
@@ -194,8 +201,36 @@ document.addEventListener("DOMContentLoaded", () => {
           `;
         },
       },
-      xAxis: { type: "value", name: "Max Speed(cm/s)", min: 0, max: xMax + 100 },
-      yAxis: { type: "value", name: "Max Pressure(bar)", min: 0, max: yMax + 100 },
+      xAxis: {
+          type: "value",
+          name: "Max Speed(cm/s)",
+          min: 0,
+          max: xMax + 100,
+          nameLocation: "center", 
+          nameGap: 35,
+           nameTextStyle: {
+    fontSize: 20,       
+    fontWeight: 'bold' ,   
+     axisLabel: {
+    fontSize: 20,  
+  }
+  }
+        },
+     yAxis: {
+        type: "value",
+        name: "Max Pressure(bar)",
+        min: 0,
+        max: yMax + 100,
+        nameLocation: "center",
+        nameGap: 50,  
+         nameTextStyle: {
+    fontSize: 20,        
+    fontWeight: 'bold',   
+    axisLabel: {
+    fontSize: 20, 
+  }
+  }
+      },
       series: [{ type: "scatter", symbolSize: 10, data, encode: { x: 1, y: 2 }, animation: false, markLine }],
     };
   }

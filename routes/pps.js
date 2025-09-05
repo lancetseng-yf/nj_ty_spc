@@ -70,7 +70,7 @@ router.get("/batch", async (req, res) => {
         casting_pressure: { [Op.ne]: null },
       },
       limit: 7,
-      order: [["diecasting_eigenvalue_data_id", "DESC"]],
+      order: [["dt", "DESC"]],
     });
     const modelArray = dataFromDb.map((item) =>
       mapDbItemToModel(item, rawModel)

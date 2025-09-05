@@ -5,14 +5,16 @@
     <title>Diecasting Chart</title>
     <style>
       body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; }
-      #controls { margin-bottom: 20px; }
-      #controls label { font-size: 18px; margin-right: 10px; }
-      #productSelect { font-size: 18px; padding: 5px 10px; min-width: 120px; }
-      #controls button { font-size: 16px; padding: 5px 10px; margin-left: 5px; }
+      #controls { margin-bottom: 25px; }
+      #controls label { font-size: 25px; margin-right: 10px; }
+      #productSelect { font-size: 25px; padding: 5px 10px; min-width: 120px; }
+      #controls button { font-size: 25px; padding: 5px 10px; margin-left: 5px; }
       #chart {
             width: 100%;
             height: 600px;
           }
+
+          
     </style>
     <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
   </head>
@@ -44,7 +46,7 @@
         if (!model) return {};
         return {
           title: { text: `${model.type || "N/A"} - ${model.dt}` },
-          legend: { data: ["Pressure", "Position", "Speed"], textStyle: { fontSize: 20 } },
+          legend: { data: ["Pressure", "Position", "Speed"], textStyle: { fontSize: 20 },  },
           tooltip: {
             trigger: "axis",
             formatter: function (params) {
