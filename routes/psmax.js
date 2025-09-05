@@ -31,7 +31,10 @@ function safeMax(arr) {
 function labelType(lasercode) {
   if (!lasercode || typeof lasercode !== "string") return "";
   const codePart = lasercode.slice(2, 11);
-  return Object.entries(CODE_MAP).find(([label, code]) => code === codePart)?.[0] || "";
+  return (
+    Object.entries(CODE_MAP).find(([label, code]) => code === codePart)?.[0] ||
+    ""
+  );
 }
 
 function mapDbItemToModel(item, rawModel) {
@@ -47,12 +50,19 @@ function mapDbItemToModel(item, rawModel) {
   };
 }
 
-// --- Main Route ---
-router.get("/", async (req, res) => {
+// --- Page Shell (fast, no DB) ---
+router.get("/", (req, res) => {
+  const typeSelect = req.query.type || "LL";
+  res.render("psmax", { type: typeSelect });
+});
+
+// --- Data API (does DB query) ---
+router.get("/data", async (req, res) => {
   try {
     const rawModel = modelJson || {};
     const typeSelect = req.query.type || "LL";
     const lasercode = getLaserCode(typeSelect);
+
     const dataFromDb = await DiecastingEigenvalueData.findAll({
       where: {
         speed: { [Op.ne]: null },
@@ -63,11 +73,14 @@ router.get("/", async (req, res) => {
       limit: 1000,
       order: [["diecasting_eigenvalue_data_id", "DESC"]],
     });
-    const modelArray = dataFromDb.map((item) => mapDbItemToModel(item, rawModel));
-    res.render("psmax", { models: modelArray, type: typeSelect });
+
+    const modelArray = dataFromDb.map((item) =>
+      mapDbItemToModel(item, rawModel)
+    );
+    res.json({ models: modelArray, type: typeSelect });
   } catch (err) {
     console.error("Error fetching data:", err);
-    res.status(500).send("Server Error");
+    res.status(500).json({ error: "Server Error" });
   }
 });
 

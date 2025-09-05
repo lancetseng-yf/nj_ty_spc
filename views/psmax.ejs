@@ -1,68 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Max Pressure vs Max Speed</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        background-color: #f4f4f4;
-        padding: 20px;
-      }
-      #productSelectBox {
-        text-align: center;
-        margin: 15px 0;
-      }
-      #productSelect {
-        font-size: 16px;
-        padding: 3px 8px;
-      }
-      #chart {
-        width: 100%;
-        height: 600px;
-      }
-      #timeSlider {
-        width: 90%;
-        margin: 20px auto;
-      }
-      #rangeLabel {
-        text-align: center;
-        margin-bottom: 10px;
-        font-weight: bold;
-      }
-      #statsTable {
-        width: 80%;
-        margin: 20px auto;
-        border-collapse: collapse;
-        text-align: center;
-      }
-      #statsTable th,
-      #statsTable td {
-        border: 1px solid #ccc;
-        padding: 6px 10px;
-      }
-    </style>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/wnumb/1.2.0/wNumb.min.js"></script>
-  </head>
-  <body>
-    <h1>Max Pressure vs Max Speed</h1>
+<head>
+  <meta charset="UTF-8" />
+  <title>Max Pressure vs Max Speed</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    #chart {
+      width: 100%;
+      height: 600px;
+    }
+    #timeSlider {
+      width: 90%;
+      margin: 20px auto;
+    }
+    #statsTable {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      text-align: center;
+    }
+    #statsTable th,
+    #statsTable td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/wnumb/1.2.0/wNumb.min.js"></script>
+</head>
+<body>
+  <h1>Max Pressure vs Max Speed</h1>
 
-    <div
-      id="productSelectBox"
-      style="text-align: left; margin: 15px 0; font-size: 18px"
-    >
+  <!-- Loading Spinner -->
+  <%- include("partials/loading") %>
+
+  <!-- Main Content (hidden until data loaded) -->
+  <div id="main-content" style="display:none;">
+    <div id="productSelectBox" style="text-align: left; margin: 15px 0; font-size: 18px">
       <label for="productSelect"><b>Select Product:</b></label>
       <select id="productSelect" style="font-size: 18px; padding: 5px 10px">
         <% ["LL","LR","ML","MR","ZP"].forEach(p => { %>
-          <option value="<%= p %>" <%= p === type ? "selected" : "" %>>
-            <%= p %>
-          </option>
+          <option value="<%= p %>" <%= p === type ? "selected" : "" %>><%= p %></option>
         <% }) %>
       </select>
     </div>
@@ -83,190 +67,169 @@
       </thead>
       <tbody></tbody>
     </table>
+  </div>
 
-d
-    <script>
-      // --- Backend Data ---
-      const models = <%- JSON.stringify(models) %>;
-      const currentType = "<%= type %>";
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const initialType = "<%= type %>";
+  const productSelect = document.getElementById("productSelect");
+  let chart, slider, rangeLabel, statsTableBody;
+  let scatterData = [];
+  let selectedProduct = null;
 
-      // --- Product Config ---
-      const productList = [
-        { productName: "LL", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
-        { productName: "LR", highSpeed: { target: 450, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
-        { productName: "ML", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 720, tolerance: 50 } },
-        { productName: "MR", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 750, tolerance: 50 } },
-        { productName: "ZP", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 700, tolerance: 50 } }
-      ];
+  // Product configs
+  const productList = [
+    { productName: "LL", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
+    { productName: "LR", highSpeed: { target: 450, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
+    { productName: "ML", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 720, tolerance: 50 } },
+    { productName: "MR", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 750, tolerance: 50 } },
+    { productName: "ZP", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 700, tolerance: 50 } }
+  ];
 
-      // --- Bind Select & Reload ---
-      const productSelect = document.getElementById("productSelect");
-      productSelect.addEventListener("change", (e) => {
-        const selected = e.target.value;
-        window.location.href = `/psmax?type=${selected}`;
+  // --- Init ---
+  fetchData(initialType);
+
+  // --- Dropdown listener ---
+  productSelect.addEventListener("change", (e) => {
+    const selected = e.target.value;
+    fetchData(selected);
+  });
+
+  // --- Fetch data + render ---
+  function fetchData(type) {
+    document.getElementById("loading-spinner").style.display = "block";
+    document.getElementById("main-content").style.display = "none";
+
+    fetch(`/psmax/data?type=${type}`)
+      .then(res => res.json())
+      .then(({ models, type }) => {
+        document.getElementById("loading-spinner").style.display = "none";
+        document.getElementById("main-content").style.display = "block";
+        renderMain(models, type);
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById("loading-spinner").innerHTML = "Failed to load data!";
       });
+  }
 
-      // --- Data Preparation ---
-      const scatterData = models.map((m) => [
-        new Date(m.dt).getTime(),
-        Number(m.max_speed),
-        Number(m.max_pressure),
-        m.diecasting_eigenvalue_data_id,
-        m.type,
-      ]);
+  function renderMain(models, currentType) {
+    scatterData = models.map((m) => [
+      new Date(m.dt).getTime(),
+      Number(m.max_speed),
+      Number(m.max_pressure),
+      m.diecasting_eigenvalue_data_id,
+      m.type,
+    ]);
 
-      const chart = echarts.init(document.getElementById("chart"));
-      const statsTableBody = document.querySelector("#statsTable tbody");
+    selectedProduct = productList.find((p) => p.productName === currentType) || productList[0];
 
-      // --- Chart Option Builder ---
-      function buildChartOption(data, productConfig) {
-        const speeds = data.map((d) => d[1]);
-        const pressures = data.map((d) => d[2]);
-        const xMax = Math.max(...speeds, 0);
-        const yMax = Math.max(...pressures, 0);
-        let markLine = null;
-        if (productConfig) {
-          const sMin = productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
-          const sMax = productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
-          const pMin = productConfig.castingPressure.target - productConfig.castingPressure.tolerance;
-          const pMax = productConfig.castingPressure.target + productConfig.castingPressure.tolerance;
-          markLine = {
-            silent: true,
-            lineStyle: { type: "dashed", color: "red" },
-            data: [{ xAxis: sMin }, { xAxis: sMax }, { yAxis: pMin }, { yAxis: pMax }],
-          };
-        }
-        return {
-          title: { text: "Scatter: Max Speed vs Max Pressure", left: "center" },
-          tooltip: {
-            trigger: "item",
-            formatter: function (params) {
-              const timestamp = params.data[0];
-              const speed = params.data[1];
-              const pressure = params.data[2];
-              const id = params.data[3];
-              const formattedTime = formatTime(timestamp);
-              return `
-                <b>ID:</b> ${id}<br/>
-                <b>Time:</b> ${formattedTime}<br/>
-                <b>Max Speed:</b> ${speed.toFixed(2)}<br/>
-                <b>Max Pressure:</b> ${pressure.toFixed(2)}
-              `;
-            },
-          },
-          xAxis: {
-            type: "value",
-            name: "Max Speed(cm/s)",
-            min: 0,
-            max: xMax + 100,
-            nameLocation: "middle",
-            nameGap: 30,
-            nameTextStyle: { fontSize: 20, fontWeight: "bold" },
-            axisLabel: { fontSize: 20 },
-          },
-          yAxis: {
-            type: "value",
-            name: "Max Pressure(bar)",
-            min: 0,
-            max: yMax + 100,
-            nameLocation: "middle",
-            nameGap: 40,
-            nameTextStyle: { fontSize: 20, fontWeight: "bold" },
-            axisLabel: { fontSize: 20 },
-          },
-          series: [
-            {
-              type: "scatter",
-              symbolSize: 10,
-              data,
-              encode: { x: 1, y: 2 },
-              animation: false,
-              markLine,
-            },
-          ],
-        };
-      }
+    if (!chart) {
+      chart = echarts.init(document.getElementById("chart"));
+      statsTableBody = document.querySelector("#statsTable tbody");
+      rangeLabel = document.getElementById("rangeLabel");
+    }
 
-      // --- Stats Table Update ---
-      function updateStatsTable(data) {
-        statsTableBody.innerHTML = "";
-        if (!selectedProduct) return;
-        const p = selectedProduct;
-        const pData = data.filter((d) => d[4] === p.productName);
-        const total = pData.length;
-        const sMin = p.highSpeed.target - p.highSpeed.tolerance;
-        const sMax = p.highSpeed.target + p.highSpeed.tolerance;
-        const pMin = p.castingPressure.target - p.castingPressure.tolerance;
-        const pMax = p.castingPressure.target + p.castingPressure.tolerance;
-        const okCount = pData.filter(
-          (d) => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax
-        ).length;
-        const ngCount = total - okCount;
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${p.productName}</td>
-          <td>Warm-Up</td>
-          <td>${ngCount}</td>
-          <td>${total}</td>
-          <td>${total ? ((ngCount / total) * 100).toFixed(2) + "%" : "0.00%"}</td>
-        `;
-        statsTableBody.appendChild(tr);
-        const tr2 = document.createElement("tr");
-        tr2.innerHTML = `
-          <td>${p.productName}</td>
-          <td>Normal</td>
-          <td>${okCount}</td>
-          <td>${total}</td>
-          <td>${total ? ((okCount / total) * 100).toFixed(2) + "%" : "0.00%"}</td>
-        `;
-        statsTableBody.appendChild(tr2);
-      }
+    // setup slider fresh each time
+    if (slider) slider.noUiSlider.destroy();
+    slider = document.getElementById("timeSlider");
+    const times = scatterData.map((d) => d[0]);
+    const minTime = Math.min(...times);
+    const maxTime = Math.max(...times);
+    noUiSlider.create(slider, {
+      start: [minTime, maxTime],
+      connect: true,
+      range: { min: minTime, max: maxTime },
+      step: 1000,
+      format: wNumb({ decimals: 0 }),
+    });
 
-      // --- Time Slider ---
-      const times = scatterData.map((d) => d[0]);
-      const minTime = Math.min(...times);
-      const maxTime = Math.max(...times);
-      const slider = document.getElementById("timeSlider");
-      noUiSlider.create(slider, {
-        start: [minTime, maxTime],
-        connect: true,
-        range: { min: minTime, max: maxTime },
-        step: 1000,
-        format: wNumb({ decimals: 0 }),
-      });
-
-      const rangeLabel = document.getElementById("rangeLabel");
-      function formatTime(ms) {
-        const d = new Date(+ms);
-        const pad = (n) => (n < 10 ? "0" + n : n);
-        return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      }
-
-      // --- Product Selection ---
-      let selectedProduct = productList.find((p) => p.productName === currentType) || productList[0];
-      productSelect.value = selectedProduct.productName;
-
-      // --- Chart Refresh ---
-      function refreshChart() {
-        let filtered = scatterData.filter(
-          (d) =>
-            d[0] >= Number(slider.noUiSlider.get()[0]) &&
-            d[0] <= Number(slider.noUiSlider.get()[1])
-        );
-        if (selectedProduct)
-          filtered = filtered.filter((d) => d[4] === selectedProduct.productName);
-        chart.setOption(buildChartOption(filtered, selectedProduct));
-        updateStatsTable(filtered);
-      }
-
-      slider.noUiSlider.on("update", () => {
-        rangeLabel.textContent = `Time: ${formatTime(slider.noUiSlider.get()[0])} ~ ${formatTime(slider.noUiSlider.get()[1])}`;
-        refreshChart();
-      });
-
-      // --- Initial Render ---
+    slider.noUiSlider.on("update", () => {
+      rangeLabel.textContent = `Time: ${formatTime(slider.noUiSlider.get()[0])} ~ ${formatTime(slider.noUiSlider.get()[1])}`;
       refreshChart();
-      window.addEventListener("resize", () => chart.resize());
-    </script>
-  </body>
+    });
+
+    refreshChart();
+    window.addEventListener("resize", () => chart.resize());
+  }
+
+  function formatTime(ms) {
+    const d = new Date(+ms);
+    const pad = (n) => (n < 10 ? "0" + n : n);
+    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function buildChartOption(data, productConfig) {
+    const speeds = data.map((d) => d[1]);
+    const pressures = data.map((d) => d[2]);
+    const xMax = Math.max(...speeds, 0);
+    const yMax = Math.max(...pressures, 0);
+    let markLine = null;
+    if (productConfig) {
+      const sMin = productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
+      const sMax = productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
+      const pMin = productConfig.castingPressure.target - productConfig.castingPressure.tolerance;
+      const pMax = productConfig.castingPressure.target + productConfig.castingPressure.tolerance;
+      markLine = {
+        silent: true,
+        lineStyle: { type: "dashed", color: "red" },
+        data: [{ xAxis: sMin }, { xAxis: sMax }, { yAxis: pMin }, { yAxis: pMax }],
+      };
+    }
+    return {
+      title: { text: "Scatter: Max Speed vs Max Pressure", left: "center" },
+      tooltip: {
+        trigger: "item",
+        formatter: function (params) {
+          const timestamp = params.data[0];
+          const speed = params.data[1];
+          const pressure = params.data[2];
+          const id = params.data[3];
+          const formattedTime = formatTime(timestamp);
+          return `
+            <b>ID:</b> ${id}<br/>
+            <b>Time:</b> ${formattedTime}<br/>
+            <b>Max Speed:</b> ${speed.toFixed(2)}<br/>
+            <b>Max Pressure:</b> ${pressure.toFixed(2)}
+          `;
+        },
+      },
+      xAxis: { type: "value", name: "Max Speed(cm/s)", min: 0, max: xMax + 100 },
+      yAxis: { type: "value", name: "Max Pressure(bar)", min: 0, max: yMax + 100 },
+      series: [{ type: "scatter", symbolSize: 10, data, encode: { x: 1, y: 2 }, animation: false, markLine }],
+    };
+  }
+
+  function updateStatsTable(data) {
+    statsTableBody.innerHTML = "";
+    if (!selectedProduct) return;
+    const p = selectedProduct;
+    const pData = data.filter((d) => d[4] === p.productName);
+    const total = pData.length;
+    const sMin = p.highSpeed.target - p.highSpeed.tolerance;
+    const sMax = p.highSpeed.target + p.highSpeed.tolerance;
+    const pMin = p.castingPressure.target - p.castingPressure.tolerance;
+    const pMax = p.castingPressure.target + p.castingPressure.tolerance;
+    const okCount = pData.filter((d) => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax).length;
+    const ngCount = total - okCount;
+
+    statsTableBody.innerHTML += `
+      <tr><td>${p.productName}</td><td>Warm-Up</td><td>${ngCount}</td><td>${total}</td><td>${total ? ((ngCount / total) * 100).toFixed(2) + "%" : "0.00%"}</td></tr>
+      <tr><td>${p.productName}</td><td>Normal</td><td>${okCount}</td><td>${total}</td><td>${total ? ((okCount / total) * 100).toFixed(2) + "%" : "0.00%"}</td></tr>
+    `;
+  }
+
+  function refreshChart() {
+    let filtered = scatterData.filter(
+      (d) =>
+        d[0] >= Number(slider.noUiSlider.get()[0]) &&
+        d[0] <= Number(slider.noUiSlider.get()[1])
+    );
+    if (selectedProduct) filtered = filtered.filter((d) => d[4] === selectedProduct.productName);
+    chart.setOption(buildChartOption(filtered, selectedProduct));
+    updateStatsTable(filtered);
+  }
+});
+</script>
+</body>
 </html>

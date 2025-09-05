@@ -1,0 +1,37 @@
+<div
+  id="loading-spinner"
+  style="
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  "
+>
+  <div style="text-align: center">
+    <div class="spinner" style="margin-bottom: 16px">
+      <svg width="48" height="48" viewBox="0 0 50 50">
+        <circle
+          cx="25"
+          cy="25"
+          r="20"
+          fill="none"
+          stroke="#3498db"
+          stroke-width="5"
+          stroke-linecap="round"
+          stroke-dasharray="31.4 31.4"
+          stroke-dashoffset="0"
+        >
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from="0 25 25"
+            to="360 25 25"
+            dur="1s"
+            repeatCount="indefinite"
+          />
+        </circle>
+      </svg>
+    </div>
+    <div>Loading, please wait...</div>
+  </div>
+</div>
