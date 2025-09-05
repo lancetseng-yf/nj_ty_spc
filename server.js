@@ -9,7 +9,7 @@ const path = require("path");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-app.use(express.static(path.join(__dirname, "public")));
+app.use('/node_modules', express.static('node_modules'));
 // Routes
 const indexRoutes = require("./routes/index");
 app.use("/", indexRoutes);
