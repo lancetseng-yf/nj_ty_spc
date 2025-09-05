@@ -4,7 +4,7 @@ const DiecastingEigenvalueData = require("../models/diecasting_eigenvalue_data")
 const modelJson = require("../models/biscuit_thick_model.json");
 const { Op } = require("sequelize");
 
-// --- Utility Functions & Code Mapping ---
+// --- Code mapping ---
 const CODE_MAP = {
   LR: "887866302",
   LL: "887866402",
@@ -21,7 +21,10 @@ function getLaserCode(label) {
 function labelType(lasercode) {
   if (!lasercode || typeof lasercode !== "string") return "";
   const codePart = lasercode.slice(2, 11);
-  return Object.entries(CODE_MAP).find(([label, code]) => code === codePart)?.[0] || "";
+  return (
+    Object.entries(CODE_MAP).find(([label, code]) => code === codePart)?.[0] ||
+    ""
+  );
 }
 
 function mapDbItemToModel(item, rawModel) {
@@ -34,11 +37,18 @@ function mapDbItemToModel(item, rawModel) {
   };
 }
 
-// --- Main Route ---
-router.get("/", async (req, res) => {
-  const rawModel = modelJson || {};
+// --- Route 1: Render EJS view ---
+router.get("/", (req, res) => {
+  const typeSelect = req.query.type || "LL";
+  res.render("biscuit", { type: typeSelect });
+});
+
+// --- Route 2: Provide JSON data ---
+router.get("/data", async (req, res) => {
   const typeSelect = req.query.type || "LL";
   const lasercode = getLaserCode(typeSelect);
+  const rawModel = modelJson || {};
+
   try {
     const dataFromDb = await DiecastingEigenvalueData.findAll({
       where: {
@@ -50,11 +60,14 @@ router.get("/", async (req, res) => {
       limit: 500,
       order: [["diecasting_eigenvalue_data_id", "DESC"]],
     });
-    const modelArray = dataFromDb.map((item) => mapDbItemToModel(item, rawModel));
-    res.render("biscuit", { models: modelArray, type: typeSelect });
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    res.status(500).send("Server Error");
+
+    const modelArray = dataFromDb.map((item) =>
+      mapDbItemToModel(item, rawModel)
+    );
+    res.json({ models: modelArray });
+  } catch (err) {
+    console.error("Error fetching data:", err);
+    res.status(500).json({ error: "Server Error" });
   }
 });
 

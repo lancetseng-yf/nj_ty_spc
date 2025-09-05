@@ -1,200 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Scatter: Time vs SM</title>
-    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-    <style>
-      body {
-        font-family: sans-serif;
-        background-color: #f4f4f4;
-        padding: 20px;
-      }
-      h1 {
-        text-align: left;
-        margin: 0 0 20px 0;
-      }
-      #controls {
-        display: flex;
-        align-items: center;
-        margin: 10px 0 20px 0;
-      }
-      #controls label {
-        font-size: 16px;
-        margin-right: 10px;
-      }
-      #productSelect {
-        font-size: 16px;
-        padding: 5px 10px;
-        min-width: 120px;
-      }
-      #chart {
-        width: 100%;
-        height: 600px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Scatter: Time vs SM</h1>
+<head>
+  <meta charset="UTF-8">
+  <title>Scatter: Time vs SM</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    h1 {
+      margin: 0 0 20px 0;
+      text-align: left;
+    }
+    #controls {
+      display: flex;
+      align-items: center;
+      margin: 10px 0 20px 0;
+    }
+    #controls label {
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    #productSelect {
+      font-size: 16px;
+      padding: 5px 10px;
+      min-width: 120px;
+    }
+    #chart {
+      width: 100%;
+      height: 600px;
+      display: none; /* hidden until data loaded */
+    }
+  </style>
+</head>
+<body>
+  <h1>Scatter: Time vs SM</h1>
 
-    <div id="controls">
-      <label for="productSelect"><b>Product:</b></label>
-      <select id="productSelect">
-        <% ["LL","LR","ML","MR","ZP"].forEach(p => { %>
-          <option value="<%= p %>" <%= p === type ? "selected" : "" %>>
-            <%= p %>
-          </option>
-        <% }) %>
-      </select>
-    </div>
+  <div id="controls">
+    <label for="productSelect"><b>Product:</b></label>
+    <select id="productSelect">
+      <% ["LL","LR","ML","MR","ZP"].forEach(p => { %>
+        <option value="<%= p %>" <%= p === type ? "selected" : "" %>><%= p %></option>
+      <% }) %>
+    </select>
+  </div>
 
-    <div id="chart"></div>
+  <!-- Loading Spinner Partial -->
+  <%- include("partials/loading") %>
 
-    <script>
-      // --- Backend Data ---
-      window.models = <%- JSON.stringify(models) %>;
-      const currentType = "<%= type %>";
+  <!-- Chart Container -->
+  <div id="chart"></div>
 
-      // --- Product Config ---
-      const PRODUCT_MEAN = 38;
-      const PRODUCT_UCL = PRODUCT_MEAN + 6;
-      const PRODUCT_LCL = PRODUCT_MEAN - 6;
-      window.productConfig = {
-        LL: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
-        LR: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
-        ML: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
-        MR: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
-        ZP: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL }
+  <script>
+    const chart = echarts.init(document.getElementById("chart"));
+    const loadingEl = document.getElementById("loading-spinner");
+    const chartEl = document.getElementById("chart");
+    const currentType = "<%= type %>";
+
+    const PRODUCT_MEAN = 38;
+    const PRODUCT_UCL = PRODUCT_MEAN + 6;
+    const PRODUCT_LCL = PRODUCT_MEAN - 6;
+    const productConfig = {
+      LL: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+      LR: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+      ML: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+      MR: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+      ZP: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL }
+    };
+
+    // --- Chart Option Builder (unchanged) ---
+    function buildChartOption(filteredData, config) {
+      const smValues = filteredData.map(d => Number(d.sm));
+      const minY = 0;
+      const maxY = Math.max(...smValues, config.ucl + 50);
+
+      const normal = filteredData.filter(d => d.sm >= config.lcl && d.sm <= config.ucl)
+                                .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
+      const below = filteredData.filter(d => d.sm < config.lcl)
+                               .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
+      const above = filteredData.filter(d => d.sm > config.ucl)
+                               .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
+
+      return {
+        legend: {
+          data: ["Normal", "Below LCL", "Above UCL", "Mean", "UCL", "LCL"],
+          top: 10,
+          textStyle: { fontSize: 16 }
+        },
+        tooltip: {
+          trigger: "item",
+          formatter: p => {
+            if (p.componentType === "markLine") return `${p.name}: ${p.value}`;
+            const d = new Date(p.value[0]);
+            const pad = n => (n < 10 ? "0"+n : n);
+            const dateStr = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+            return `<b>ID:</b> ${p.data.id}<br/><b>Time:</b> ${dateStr}<br/><b>SM:</b> ${p.value[1]}`;
+          }
+        },
+        dataZoom: [{ type: "inside", start: 0, end: 100 }],
+        toolbox: { show: true, feature: { dataZoom:{yAxisIndex:"none"}, restore:{} } },
+        xAxis: {
+          type: "time",
+          name: "Time",
+          axisLabel: {
+            fontSize: 18,
+            interval: "auto",
+            rotate: 30,
+            formatter: val => {
+              const d = new Date(val);
+              const pad = n => (n<10?"0"+n:n);
+              return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
+            }
+          },
+          splitLine: { show: true },
+          minInterval: 24*60*60*1000
+        },
+        yAxis: {
+          type: "value",
+          name: "SM(mm)",
+          min: minY,
+          max: maxY,
+          axisLabel: { fontSize: 18 }
+        },
+        series: [
+          { name:"Normal", type:"scatter", symbolSize:12, data:normal, itemStyle:{color:"blue"} },
+          { name:"Below LCL", type:"scatter", symbolSize:12, data:below, itemStyle:{color:"orange"} },
+          { name:"Above UCL", type:"scatter", symbolSize:12, data:above, itemStyle:{color:"red"} },
+          { name:"Mean", type:"line", data:[], markLine:{symbol:"none", lineStyle:{color:"green", type:"dashed", width:3}, data:[{name:"Mean", yAxis:config.mean}]}, itemStyle:{color:"green"} },
+          { name:"UCL", type:"line", data:[], markLine:{symbol:"none", lineStyle:{color:"red", type:"dashed", width:3}, data:[{name:"UCL", yAxis:config.ucl}]}, itemStyle:{color:"red"} },
+          { name:"LCL", type:"line", data:[], markLine:{symbol:"none", lineStyle:{color:"purple", type:"dashed", width:3}, data:[{name:"LCL", yAxis:config.lcl}]}, itemStyle:{color:"purple"} }
+        ]
       };
+    }
 
-      // --- Chart Initialization ---
-      const chart = echarts.init(document.getElementById("chart"));
+    // --- Fetch & Render with Loading ---
+    function loadData(type) {
+      loadingEl.style.display = "block";
+      chartEl.style.display = "none";
 
-      // --- Chart Option Builder ---
-      function buildChartOption(filteredData, config) {
-        const smValues = filteredData.map(d => Number(d.sm));
-        const minY = 0;
-        const maxY = Math.max(...smValues, config.ucl + 50);
+     fetch(`/biscuit/data?type=${type}`)
+  .then(res => res.json())
+  .then(data => {
+    // if backend returns { models: [...] }
+    const models = data.models || [];
+    const filtered = models.filter(m => m.type === type);
 
-        // Grouped scatter series
-        const normal = filteredData.filter(d => d.sm >= config.lcl && d.sm <= config.ucl)
-                                  .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
-        const below = filteredData.filter(d => d.sm < config.lcl)
-                                 .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
-        const above = filteredData.filter(d => d.sm > config.ucl)
-                                 .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
+    requestAnimationFrame(() => {
+      chart.setOption(buildChartOption(filtered, productConfig[type]));
+      loadingEl.style.display = "none";
+      chartEl.style.display = "block";
+    });
+  })
+  .catch(err => {
+    console.error(err);
+    loadingEl.textContent = "Failed to load data!";
+  });
+    }
 
-        return {
-          legend: {
-            data: [
-              { name: "Normal", icon: "circle" },
-              { name: "Below LCL", icon: "circle" },
-              { name: "Above UCL", icon: "circle" },
-              { name: "Mean", icon: "rect" },
-              { name: "UCL", icon: "rect" },
-              { name: "LCL", icon: "rect" }
-            ],
-            top: 10,
-            textStyle: { fontSize: 16 }
-          },
-          tooltip: {
-            trigger: "item",
-            formatter: p => {
-              if (p.componentType === "markLine") return `${p.name}: ${p.value}`;
-              const d = new Date(p.value[0]);
-              const pad = n => (n < 10 ? "0" + n : n);
-              const dateStr = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ` +
-                              `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-              return `<b>ID:</b> ${p.data.id}<br/><b>Time:</b> ${dateStr}<br/><b>SM:</b> ${p.value[1]}`;
-            }
-          },
-          dataZoom: [{ type: "inside", start: 0, end: 100 }],
-          toolbox: {
-            show: true,
-            feature: {
-              dataZoom: { yAxisIndex: "none" },
-              restore: {},
-            },
-          },
-          xAxis: {
-            type: "time",
-            name: "Time",
-            axisLabel: {
-              fontSize: 18,
-              interval: "auto",
-              rotate: 30,
-              formatter: val => {
-                const d = new Date(val);
-                const pad = n => (n < 10 ? "0" + n : n);
-                return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
-              }
-            },
-            splitLine: { show: true },
-            minInterval: 24 * 60 * 60 * 1000 // 1 day
-          },
-          yAxis: {
-            type: "value",
-            name: "SM(mm)",
-            min: minY,
-            max: maxY,
-            axisLabel: { fontSize: 18 }
-          },
-          series: [
-            { name: "Normal", type: "scatter", symbolSize: 12, data: normal, itemStyle: { color: "blue" } },
-            { name: "Below LCL", type: "scatter", symbolSize: 12, data: below, itemStyle: { color: "orange" } },
-            { name: "Above UCL", type: "scatter", symbolSize: 12, data: above, itemStyle: { color: "red" } },
-            {
-              name: "Mean",
-              type: "line",
-              data: [],
-              markLine: {
-                symbol: "none",
-                lineStyle: { color: "green", type: "dashed", width: 3 },
-                data: [{ name: "Mean", yAxis: config.mean }]
-              },
-              itemStyle: { color: "green" }
-            },
-            {
-              name: "UCL",
-              type: "line",
-              data: [],
-              markLine: {
-                symbol: "none",
-                lineStyle: { color: "red", type: "dashed", width: 3 },
-                data: [{ name: "UCL", yAxis: config.ucl }]
-              },
-              itemStyle: { color: "red" }
-            },
-            {
-              name: "LCL",
-              type: "line",
-              data: [],
-              markLine: {
-                symbol: "none",
-                lineStyle: { color: "purple", type: "dashed", width: 3 },
-                data: [{ name: "LCL", yAxis: config.lcl }]
-              },
-              itemStyle: { color: "purple" }
-            }
-          ]
-        };
-      }
+    // --- Initial Load ---
+    loadData(currentType);
+    window.addEventListener("resize", () => chart.resize());
 
-      // --- Initial Render ---
-      function renderChart() {
-        const config = window.productConfig[currentType];
-        const filtered = window.models.filter(m => m.type === currentType);
-        chart.setOption(buildChartOption(filtered, config));
-      }
-
-      renderChart();
-      window.addEventListener("resize", () => chart.resize());
-
-      // --- Bind Select & Reload ---
-      document.getElementById("productSelect").addEventListener("change", e => {
-        const selected = e.target.value;
-        window.location.href = `/biscuit?type=${selected}`;
-      });
-    </script>
-  </body>
+    // --- Product Selection ---
+    document.getElementById("productSelect").addEventListener("change", e => {
+      const selected = e.target.value;
+      loadData(selected);
+    });
+  </script>
+</body>
 </html>
