@@ -25,7 +25,10 @@ function normalizeArray(arr, multiplier = 1) {
 function labelType(lasercode) {
   if (!lasercode || typeof lasercode !== "string") return "";
   const codePart = lasercode.slice(2, 11);
-  return Object.entries(CODE_MAP).find(([label, code]) => code === codePart)?.[0] || "";
+  return (
+    Object.entries(CODE_MAP).find(([label, code]) => code === codePart)?.[0] ||
+    ""
+  );
 }
 
 function getLaserCode(label) {
@@ -69,7 +72,9 @@ router.get("/batch", async (req, res) => {
       limit: 7,
       order: [["diecasting_eigenvalue_data_id", "DESC"]],
     });
-    const modelArray = dataFromDb.map((item) => mapDbItemToModel(item, rawModel));
+    const modelArray = dataFromDb.map((item) =>
+      mapDbItemToModel(item, rawModel)
+    );
     res.render("pps-batch", { models: modelArray });
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -77,8 +82,8 @@ router.get("/batch", async (req, res) => {
   }
 });
 
-// --- Single Route ---
-router.get("/single", async (req, res) => {
+// --- Single Data Route ---
+router.get("/single/data", async (req, res) => {
   const rawModel = modelJson || {};
   const typeSelect = req.query.type || "LL";
   const lasercode = getLaserCode(typeSelect);
@@ -93,14 +98,21 @@ router.get("/single", async (req, res) => {
       limit: 100,
       order: [["diecasting_eigenvalue_data_id", "DESC"]],
     });
-    // Reverse for chronological order
     const dataFromDb = dataFromDbDesc.reverse();
-    const modelArray = dataFromDb.map((item) => mapDbItemToModel(item, rawModel));
-    res.render("pps-single", { models: modelArray, type: typeSelect });
+    const modelArray = dataFromDb.map((item) =>
+      mapDbItemToModel(item, rawModel)
+    );
+    res.json({ models: modelArray, type: typeSelect });
   } catch (error) {
     console.error("Error fetching data:", error);
-    res.status(500).send("Server Error");
+    res.status(500).json({ error: "Server Error" });
   }
+});
+
+// --- Single Page Route ---
+router.get("/single", (req, res) => {
+  const typeSelect = req.query.type || "LL";
+  res.render("pps-single", { type: typeSelect });
 });
 
 module.exports = router;
