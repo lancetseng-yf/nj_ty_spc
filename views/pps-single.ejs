@@ -20,7 +20,7 @@
     <h1>Diecasting Eigenvalue Chart (1 Shot)</h1>
 
     <%- include("partials/loading") %>
-  <div id="main-content" style="display:none;"></div>
+  <!-- <div id="main-content" style="display:none;">    </div> -->
     <div id="controls">
       <label for="productSelect">Product: </label>
       <select id="productSelect">
@@ -33,7 +33,7 @@
     </div>
 
     <div id="chart"></div>
-   </div>
+
     <script>
       const chart = echarts.init(document.getElementById("chart"));
       let models = [];
@@ -95,7 +95,7 @@
       function fetchData(type) {
     
     document.getElementById("loading-spinner").style.display = "block";
-    document.getElementById("main-content").style.display = "none";
+    // document.getElementById("main-content").style.display = "none";
 
         chart.clear();
         fetch(`/pps/single/data?type=${type}`)
@@ -103,8 +103,8 @@
           .then(({ models: m }) => {
             models = m;
             currentIndex = models.length > 0 ? models.length - 1 : 0;
-              document.getElementById("loading-spinner").style.display = "none";
-        document.getElementById("main-content").style.display = "block";
+        document.getElementById("loading-spinner").style.display = "none";
+        // document.getElementById("main-content").style.display = "block";
             renderChart();
           })
           .catch(err => {
