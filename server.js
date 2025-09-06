@@ -9,6 +9,7 @@ const path = require("path");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+app.use(express.static(path.join(__dirname, 'views')));
 app.use('/node_modules', express.static('node_modules'));
 // Routes
 const indexRoutes = require("./routes/index");
@@ -20,7 +21,6 @@ app.use("/psmax", require("./routes/psmax"));
 app.use("/bmw-kanban", require("./routes/bmw-kanban"));
 app.use("/biscuit", require("./routes/biscuit"));
 
-// Add your data visualization logic here
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

@@ -1,0 +1,135 @@
+const chart = echarts.init(document.getElementById("chart"));
+const loadingEl = document.getElementById("loading-spinner");
+const chartEl = document.getElementById("chart");
+
+const PRODUCT_MEAN = 38;
+const PRODUCT_UCL = PRODUCT_MEAN + 6;
+const PRODUCT_LCL = PRODUCT_MEAN - 6;
+const productConfig = {
+  LL: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+  LR: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+  ML: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+  MR: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+  ZP: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL }
+};
+
+// --- Chart Option Builder (unchanged) ---
+function buildChartOption(filteredData, config) {
+  const smValues = filteredData.map(d => Number(d.sm));
+  const minY = 0;
+  const maxY = Math.max(...smValues, config.ucl + 50);
+
+  const normal = filteredData.filter(d => d.sm >= config.lcl && d.sm <= config.ucl)
+                            .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
+  const below = filteredData.filter(d => d.sm < config.lcl)
+                           .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
+  const above = filteredData.filter(d => d.sm > config.ucl)
+                           .map(d => ({ value: [new Date(d.dt).getTime(), d.sm], id: d.diecasting_eigenvalue_data_id }));
+
+  return {
+    legend: {
+      data: ["Normal", "Below LCL", "Above UCL", "Mean", "UCL", "LCL"],
+      top: 10,
+      textStyle: { fontSize: 16 }
+    },
+    tooltip: {
+      trigger: "item",
+      formatter: p => {
+        if (p.componentType === "markLine") return `${p.name}: ${p.value}`;
+        const d = new Date(p.value[0]);
+        const pad = n => (n < 10 ? "0"+n : n);
+        const dateStr = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        return `<b>ID:</b> ${p.data.id}<br/><b>Time:</b> ${dateStr}<br/><b>SM:</b> ${p.value[1]}`;
+      }
+    },
+    dataZoom: [{ type: "inside", start: 0, end: 100 }],
+    toolbox: {
+      show: true,
+      feature: {
+        dataZoom: { yAxisIndex: 'none' },
+        myrestore: {
+          show: true,
+          icon: `path://M512 0L1024 512 512 1024 0 512Z`,
+          title: 'Reset Zoom',
+          onclick: function () {
+            chart.dispatchAction({
+              type: 'dataZoom',
+              start: 0,
+              end: 100
+            });
+          }
+        }
+      }
+    },
+    xAxis: {
+      type: "time",
+      name: "Time",
+      axisLabel: {
+        fontSize: 18,
+        interval: "auto",
+        rotate: 30,
+        formatter: val => {
+          const d = new Date(val);
+          const pad = n => (n<10?"0"+n:n);
+          return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
+        }
+      },
+      splitLine: { show: true },
+      minInterval: 24*60*60*1000
+    },
+    yAxis: {
+      type: "value",
+      name: "SM(mm)",
+      min: minY,
+      max: maxY,
+      axisLabel: { fontSize: 18 }
+    },
+    series: [
+      { name:"Normal", type:"scatter", symbolSize:12, data:normal, itemStyle:{color:"blue"} },
+      { name:"Below LCL", type:"scatter", symbolSize:12, data:below, itemStyle:{color:"orange"} },
+      { name:"Above UCL", type:"scatter", symbolSize:12, data:above, itemStyle:{color:"red"} },
+      { name:"Mean", type:"line", data:[], markLine:{symbol:"none", lineStyle:{color:"green", type:"dashed", width:3}, data:[{name:"Mean", yAxis:config.mean}]}, itemStyle:{color:"green"} },
+      { name:"UCL", type:"line", data:[], markLine:{symbol:"none", lineStyle:{color:"red", type:"dashed", width:3}, data:[{name:"UCL", yAxis:config.ucl}]}, itemStyle:{color:"red"} },
+      { name:"LCL", type:"line", data:[], markLine:{symbol:"none", lineStyle:{color:"purple", type:"dashed", width:3}, data:[{name:"LCL", yAxis:config.lcl}]}, itemStyle:{color:"purple"} }
+    ]
+  };
+}
+
+// --- Fetch & Render with Loading ---
+function loadData(type) {
+  console.log("Loading data for type:", type);
+  loadingEl.style.display = "flex";
+  chartEl.style.display = "none";
+
+  fetch(`/biscuit/data?type=${type}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("Data received:", data);
+      const models = data.models || [];
+      const filtered = models.filter(m => m.type === type);
+      console.log("Filtered data:", filtered);
+
+      const chartOption = buildChartOption(filtered, productConfig[type]);
+      console.log("Chart option:", chartOption);
+      chart.setOption(chartOption);
+    })
+    .catch(err => {
+      console.error("Error in loadData:", err);
+      loadingEl.textContent = "Failed to load data!";
+    })
+    .finally(() => {
+      loadingEl.style.display = "none";
+      chartEl.style.display = "block";
+      requestAnimationFrame(() => chart.resize());
+    });
+}
+
+// --- Initial Load ---
+loadData(currentType);
+window.addEventListener("resize", () => chart.resize());
+
+// --- Product Selection ---
+document.getElementById("productSelect").addEventListener("change", e => {
+  const selected = e.target.value;
+  loadData(selected);
+});
