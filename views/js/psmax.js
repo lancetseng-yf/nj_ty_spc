@@ -7,11 +7,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Product configs
   const productList = [
-    { productName: "LL", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
-    { productName: "LR", highSpeed: { target: 450, tolerance: 10 }, castingPressure: { target: 650, tolerance: 50 } },
-    { productName: "ML", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 720, tolerance: 50 } },
-    { productName: "MR", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 750, tolerance: 50 } },
-    { productName: "ZP", highSpeed: { target: 500, tolerance: 10 }, castingPressure: { target: 700, tolerance: 50 } }
+    {
+      productName: "LL",
+      highSpeed: { target: 500, tolerance: 10 },
+      castingPressure: { target: 650, tolerance: 50 },
+    },
+    {
+      productName: "LR",
+      highSpeed: { target: 450, tolerance: 10 },
+      castingPressure: { target: 650, tolerance: 50 },
+    },
+    {
+      productName: "ML",
+      highSpeed: { target: 500, tolerance: 10 },
+      castingPressure: { target: 720, tolerance: 50 },
+    },
+    {
+      productName: "MR",
+      highSpeed: { target: 500, tolerance: 10 },
+      castingPressure: { target: 750, tolerance: 50 },
+    },
+    {
+      productName: "ZP",
+      highSpeed: { target: 500, tolerance: 10 },
+      castingPressure: { target: 700, tolerance: 50 },
+    },
   ];
 
   // --- Init ---
@@ -29,15 +49,16 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("main-content").style.display = "none";
 
     fetch(`/psmax/data?type=${type}`)
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(({ models, type }) => {
         document.getElementById("loading-spinner").style.display = "none";
         document.getElementById("main-content").style.display = "block";
         renderMain(models, type);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error(err);
-        document.getElementById("loading-spinner").innerHTML = "Failed to load data!";
+        document.getElementById("loading-spinner").innerHTML =
+          "Failed to load data!";
       });
   }
 
@@ -50,7 +71,8 @@ document.addEventListener("DOMContentLoaded", () => {
       m.type,
     ]);
 
-    selectedProduct = productList.find((p) => p.productName === currentType) || productList[0];
+    selectedProduct =
+      productList.find((p) => p.productName === currentType) || productList[0];
 
     if (!chart) {
       chart = echarts.init(document.getElementById("chart"));
@@ -73,7 +95,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     slider.noUiSlider.on("update", () => {
-      rangeLabel.textContent = `Time: ${formatTime(slider.noUiSlider.get()[0])} ~ ${formatTime(slider.noUiSlider.get()[1])}`;
+      rangeLabel.textContent = `Time: ${formatTime(
+        slider.noUiSlider.get()[0]
+      )} ~ ${formatTime(slider.noUiSlider.get()[1])}`;
       refreshChart();
     });
 
@@ -84,77 +108,99 @@ document.addEventListener("DOMContentLoaded", () => {
   function formatTime(ms) {
     const d = new Date(+ms);
     const pad = (n) => (n < 10 ? "0" + n : n);
-    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(
+      d.getDate()
+    )} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  function buildChartOption(data, productConfig) {
-    const speeds = data.map((d) => d[1]);
-    const pressures = data.map((d) => d[2]);
-    const xMax = Math.max(...speeds, 0);
-    const yMax = Math.max(...pressures, 0);
-    let markLine = null;
-    if (productConfig) {
-      const sMin = productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
-      const sMax = productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
-      const pMin = productConfig.castingPressure.target - productConfig.castingPressure.tolerance;
-      const pMax = productConfig.castingPressure.target + productConfig.castingPressure.tolerance;
-      markLine = {
-        silent: true,
-        lineStyle: { type: "dashed", color: "red" },
-        data: [{ xAxis: sMin }, { xAxis: sMax }, { yAxis: pMin }, { yAxis: pMax }],
-      };
-    }
-    return {
-      title: { text: "Scatter: Max Speed vs Max Pressure", left: "center" },
-      tooltip: {
-        trigger: "item",
-        formatter: function (params) {
-          const timestamp = params.data[0];
-          const speed = params.data[1];
-          const pressure = params.data[2];
-          const id = params.data[3];
-          const formattedTime = formatTime(timestamp);
-          return `
-            <b>ID:</b> ${id}<br/>
-            <b>Time:</b> ${formattedTime}<br/>
-            <b>Max Speed:</b> ${speed.toFixed(2)}<br/>
-            <b>Max Pressure:</b> ${pressure.toFixed(2)}
-          `;
-        },
-      },
-      xAxis: {
-          type: "value",
-          name: "Max Speed(cm/s)",
-          min: 0,
-          max: xMax + 100,
-          nameLocation: "center", 
-          nameGap: 35,
-           nameTextStyle: {
-    fontSize: 20,       
-    fontWeight: 'bold' ,   
-     axisLabel: {
-    fontSize: 20,  
-  }
-  }
-        },
-     yAxis: {
-        type: "value",
-        name: "Max Pressure(bar)",
-        min: 0,
-        max: yMax + 100,
-        nameLocation: "center",
-        nameGap: 50,  
-         nameTextStyle: {
-    fontSize: 20,        
-    fontWeight: 'bold',   
-    axisLabel: {
-    fontSize: 20, 
-  }
-  }
-      },
-      series: [{ type: "scatter", symbolSize: 10, data, encode: { x: 1, y: 2 }, animation: false, markLine }],
+function buildChartOption(data, productConfig) {
+  const speeds = data.map((d) => d[1]);
+  const pressures = data.map((d) => d[2]);
+  const xMax = Math.max(...speeds, 0);
+  const yMax = Math.max(...pressures, 0);
+
+  let markLine = null;
+  let okData = data;
+  let ngData = [];
+
+  if (productConfig) {
+    const sMin = productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
+    const sMax = productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
+    const pMin = productConfig.castingPressure.target - productConfig.castingPressure.tolerance;
+    const pMax = productConfig.castingPressure.target + productConfig.castingPressure.tolerance;
+
+    // Split OK vs NG points
+    okData = data.filter(d => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax);
+    ngData = data.filter(d => !okData.includes(d));
+
+    markLine = {
+      silent: true,
+      lineStyle: { type: "dashed", color: "red" },
+      
+      data: [
+        { xAxis: sMin }, { xAxis: sMax },
+        { yAxis: pMin }, { yAxis: pMax },
+      ],
     };
   }
+
+  return {
+    tooltip: {
+      trigger: "item",
+      formatter: function (params) {
+        const [timestamp, speed, pressure, id] = params.data;
+        const formattedTime = formatTime(timestamp);
+        return `
+          <b>ID:</b> ${id}<br/>
+          <b>Time:</b> ${formattedTime}<br/>
+          <b>Max Speed:</b> ${speed.toFixed(2)}<br/>
+          <b>Max Pressure:</b> ${pressure.toFixed(2)}
+        `;
+      },
+    },
+    xAxis: {
+      type: "value",
+      name: "Max Speed(cm/s)",
+      min: 0,
+      max: xMax + 100,
+      nameLocation: "center",
+      nameGap: 35,
+      nameTextStyle: { fontSize: 20, fontWeight: "bold" },
+      axisLabel: { fontSize: 20 },
+    },
+    yAxis: {
+      type: "value",
+      name: "Max Pressure(bar)",
+      min: 0,
+      max: yMax + 100,
+      nameLocation: "center",
+      nameGap: 50,
+      nameTextStyle: { fontSize: 20, fontWeight: "bold" },
+      axisLabel: { fontSize: 20 },
+    },
+    series: [
+      {
+        name: "OK",
+        type: "scatter",
+        symbolSize: 10,
+        data: okData,
+        itemStyle: { color: "green" },
+        encode: { x: 1, y: 2 },
+        animation: false,
+        markLine,
+      },
+      {
+        name: "NG",
+        type: "scatter",
+        symbolSize: 10,
+        data: ngData,
+        itemStyle: { color: "red" },
+        encode: { x: 1, y: 2 },
+        animation: false,
+      },
+    ],
+  };
+}
 
   function updateStatsTable(data) {
     statsTableBody.innerHTML = "";
@@ -166,12 +212,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const sMax = p.highSpeed.target + p.highSpeed.tolerance;
     const pMin = p.castingPressure.target - p.castingPressure.tolerance;
     const pMax = p.castingPressure.target + p.castingPressure.tolerance;
-    const okCount = pData.filter((d) => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax).length;
+    const okCount = pData.filter(
+      (d) => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax
+    ).length;
     const ngCount = total - okCount;
 
     statsTableBody.innerHTML += `
-      <tr><td>${p.productName}</td><td>Warm-Up</td><td>${ngCount}</td><td>${total}</td><td>${total ? ((ngCount / total) * 100).toFixed(2) + "%" : "0.00%"}</td></tr>
-      <tr><td>${p.productName}</td><td>Normal</td><td>${okCount}</td><td>${total}</td><td>${total ? ((okCount / total) * 100).toFixed(2) + "%" : "0.00%"}</td></tr>
+      <tr><td>${
+        p.productName
+      }</td><td>Warm-Up</td><td>${ngCount}</td><td>${total}</td><td>${
+      total ? ((ngCount / total) * 100).toFixed(2) + "%" : "0.00%"
+    }</td></tr>
+      <tr><td>${
+        p.productName
+      }</td><td>Normal</td><td>${okCount}</td><td>${total}</td><td>${
+      total ? ((okCount / total) * 100).toFixed(2) + "%" : "0.00%"
+    }</td></tr>
     `;
   }
 
@@ -181,7 +237,8 @@ document.addEventListener("DOMContentLoaded", () => {
         d[0] >= Number(slider.noUiSlider.get()[0]) &&
         d[0] <= Number(slider.noUiSlider.get()[1])
     );
-    if (selectedProduct) filtered = filtered.filter((d) => d[4] === selectedProduct.productName);
+    if (selectedProduct)
+      filtered = filtered.filter((d) => d[4] === selectedProduct.productName);
     chart.setOption(buildChartOption(filtered, selectedProduct));
     updateStatsTable(filtered);
   }
