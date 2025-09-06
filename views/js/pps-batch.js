@@ -55,7 +55,7 @@ function buildChartOption(models) {
     },
     xAxis: {
       type: "time",
-      // name: "Time",
+      name: "Time(s)",
       // nameLocation: "middle",
       // nameGap: 50,
       nameTextStyle: { fontSize: 20, fontWeight: "bold", color: "#333" },
