@@ -12,14 +12,14 @@
     <%- include("partials/loading") %>
 
     <div id="controls">
-      <label for="productSelect">Product:</label>
+      <label for="productSelect">Select Product:</label>
       <select id="productSelect">
         <% ["LL","LR","ML","MR"].forEach(p => { %>
           <option value="<%= p %>" <%= p === type ? "selected" : "" %>><%= p %></option>
         <% }) %>
       </select>
-      <button id="prevBtn">⬅ 上一個</button>
-      <button id="nextBtn">下一個 ➡</button>
+      <button id="prevBtn">⬅ Previous</button>
+      <button id="nextBtn">Next ➡</button>
     </div>
 
     <div id="chart"></div>
