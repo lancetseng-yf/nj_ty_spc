@@ -167,20 +167,17 @@ function buildChartOption(filteredData, config) {
 
 // --- Fetch & Render with Loading ---
 function loadData(type) {
-  console.log("Loading data for type:", type);
   loadingEl.style.display = "flex";
   chartEl.style.display = "none";
 
   fetch(`/biscuit/data?type=${type}`)
     .then((res) => res.json())
     .then((data) => {
-      console.log("Data received:", data);
       const models = data.models || [];
-      const filtered = models.filter((m) => m.type === type);
-      console.log("Filtered data:", filtered);
+      // The filtering by type is now handled by the backend controller.
+      // const filtered = models.filter((m) => m.type === type);
 
-      const chartOption = buildChartOption(filtered, productConfig[type]);
-      console.log("Chart option:", chartOption);
+      const chartOption = buildChartOption(models, productConfig[type]);
       chart.setOption(chartOption);
     })
     .catch((err) => {
