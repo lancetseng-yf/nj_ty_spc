@@ -1,7 +1,8 @@
 body {
   font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background-color: #a2bdd8;
-  padding: 20px;
+  padding-right: 20px;
+  padding-left: 20px;
   margin: 0;
   color: #333;
 }
@@ -21,7 +22,7 @@ h1 {
   background: #ffffff;
   padding: 12px 16px;
   border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   font-size: 18px;
   margin: 0 auto 20px auto;
   width: fit-content;
@@ -54,7 +55,6 @@ h1 {
   display: none; /* hidden until data loaded */
   background: #fff;
   border-radius: 10px;
-  padding: 15px;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
