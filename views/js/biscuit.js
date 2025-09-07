@@ -5,6 +5,7 @@ const chartEl = document.getElementById("chart");
 const PRODUCT_MEAN = 38;
 const PRODUCT_UCL = PRODUCT_MEAN + 6;
 const PRODUCT_LCL = PRODUCT_MEAN - 6;
+
 const productConfig = {
   LL: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
   LR: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
@@ -13,7 +14,7 @@ const productConfig = {
   ZP: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
 };
 
-// --- Chart Option Builder (unchanged) ---
+// --- Chart Option Builder (same as before) ---
 function buildChartOption(filteredData, config) {
   const smValues = filteredData.map((d) => Number(d.sm));
   const minY = 0;
@@ -40,7 +41,7 @@ function buildChartOption(filteredData, config) {
 
   return {
     legend: {
-      data: ["Normal", "Below LCL", "Above UCL", "Mean", "UCL", "LCL"],
+      data: ["Normal", "Below LCL", "Above LCL", "Mean", "UCL", "LCL"],
       top: 10,
       textStyle: { fontSize: 16 },
     },
@@ -65,13 +66,8 @@ function buildChartOption(filteredData, config) {
           show: true,
           icon: `path://M512 0L1024 512 512 1024 0 512Z`,
           title: "Reset Zoom",
-          onclick: function () {
-            chart.dispatchAction({
-              type: "dataZoom",
-              start: 0,
-              end: 100,
-            });
-          },
+          onclick: () =>
+            chart.dispatchAction({ type: "dataZoom", start: 0, end: 100 }),
         },
       },
     },
@@ -81,7 +77,6 @@ function buildChartOption(filteredData, config) {
       nameLocation: "center",
       nameGap: 50,
       nameTextStyle: { fontSize: 20, fontWeight: "bold" },
-      axisLabel: { fontSize: 18 },
       axisLabel: {
         fontSize: 18,
         interval: "auto",
@@ -122,7 +117,7 @@ function buildChartOption(filteredData, config) {
         itemStyle: { color: "orange" },
       },
       {
-        name: "Above UCL",
+        name: "Above LCL",
         type: "scatter",
         symbolSize: 12,
         data: above,
@@ -165,7 +160,7 @@ function buildChartOption(filteredData, config) {
   };
 }
 
-// --- Fetch & Render with Loading ---
+// --- Fetch & Render ---
 function loadData(type) {
   loadingEl.style.display = "flex";
   chartEl.style.display = "none";
@@ -174,11 +169,7 @@ function loadData(type) {
     .then((res) => res.json())
     .then((data) => {
       const models = data.models || [];
-      // The filtering by type is now handled by the backend controller.
-      // const filtered = models.filter((m) => m.type === type);
-
-      const chartOption = buildChartOption(models, productConfig[type]);
-      chart.setOption(chartOption);
+      chart.setOption(buildChartOption(models, productConfig[type]));
     })
     .catch((err) => {
       console.error("Error in loadData:", err);
@@ -191,12 +182,54 @@ function loadData(type) {
     });
 }
 
+// --- Countdown / Auto Refresh ---
+let refreshTime = 30; // seconds
+let countdownInterval;
+let timeLeft = refreshTime;
+let autoRefresh = true;
+const refreshIcon = document.getElementById("refreshIcon");
+
+function startCountdown(type) {
+  clearInterval(countdownInterval);
+  if (!autoRefresh) return;
+
+  countdownInterval = setInterval(() => {
+    document.getElementById(
+      "countdown"
+    ).innerText = `Refreshing in: ${timeLeft}s`;
+    timeLeft--;
+
+    if (timeLeft < 0) {
+      loadData(type);
+      timeLeft = refreshTime;
+    }
+  }, 1000);
+}
+
+// --- Pause / Start Button ---
+const refreshBtn = document.getElementById("refreshControl");
+refreshBtn.addEventListener("click", () => {
+  autoRefresh = !autoRefresh;
+  if (autoRefresh) {
+    refreshIcon.innerText = "pause";
+    startCountdown(currentType);
+  } else {
+    refreshIcon.innerText = "play_arrow";
+    clearInterval(countdownInterval);
+  }
+});
+
 // --- Initial Load ---
 loadData(currentType);
-window.addEventListener("resize", () => chart.resize());
+startCountdown(currentType);
 
 // --- Product Selection ---
 document.getElementById("productSelect").addEventListener("change", (e) => {
-  const selected = e.target.value;
-  loadData(selected);
+  currentType = e.target.value;
+  loadData(currentType);
+  timeLeft = refreshTime;
+  startCountdown(currentType);
 });
+
+// --- Resize ---
+window.addEventListener("resize", () => chart.resize());

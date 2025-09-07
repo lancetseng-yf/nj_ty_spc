@@ -5,9 +5,11 @@
   <title>Biscuit Thickness</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
   <link rel="stylesheet" href="/css/biscuit.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+   
 </head>
 <body>
-  <h1>Biscuit Thickness</h1>
+  <h1>Biscuit Thickness (latest 500 records)</h1>
 
   <div id="controls">
     <label for="productSelect">Select Product:</label>
@@ -16,13 +18,18 @@
         <option value="<%= p %>" <%= p === type ? "selected" : "" %>><%= p %></option>
       <% }) %>
     </select>
+
+    <span id="countdown">Refreshing in: 10s</span>
+    <button id="refreshControl" title="Pause/Start">
+      <span class="material-icons" id="refreshIcon">pause</span>
+    </button>
   </div>
 
   <!-- Loading Spinner Partial -->
   <%- include("partials/loading") %>
 
   <!-- Chart Container -->
-  <div id="chart"></div>
+  <div id="chart" style="height: 500px;"></div>
 
   <script>
     var currentType = "<%= type %>";
