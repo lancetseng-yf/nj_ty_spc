@@ -1,5 +1,5 @@
 const { DataTypes } = require("sequelize");
-const sequelize = require("../db2");
+const sequelize = require("../config/db2");
 const { tr } = require("date-fns/locale");
 const { parse, isValid } = require("date-fns");
 

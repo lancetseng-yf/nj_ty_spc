@@ -3,7 +3,7 @@
 const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
-const sequelize = require('./db2');
+const sequelize = require('./config/db2');
 const path = require("path");
 
 app.set("view engine", "ejs");
