@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/wnumb/1.2.0/wNumb.min.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
   <h1>Max Pressure vs Max Speed</h1>
@@ -25,6 +26,11 @@
           <option value="<%= p %>" <%= p === type ? "selected" : "" %>><%= p %></option>
         <% }) %>
       </select>
+
+       <span id="countdown">Refreshing in: 10s</span>
+      <button id="refreshControl" title="Pause/Start">
+        <span class="material-icons" id="refreshIcon">pause</span>
+      </button>
     </div>
 
     <div id="chart"></div>

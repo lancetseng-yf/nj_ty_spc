@@ -4,6 +4,13 @@ document.addEventListener("DOMContentLoaded", () => {
   let chart, slider, rangeLabel, statsTableBody;
   let scatterData = [];
   let selectedProduct = null;
+  let currentType = initialType;
+
+  // Auto-refresh
+  let refreshTime = 30; // seconds
+  let timeLeft = refreshTime;
+  let autoRefresh = true;
+  let countdownInterval;
 
   // Product configs
   const productList = [
@@ -39,8 +46,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Dropdown listener ---
   productSelect.addEventListener("change", (e) => {
-    const selected = e.target.value;
-    fetchData(selected);
+    currentType = e.target.value;
+    timeLeft = refreshTime;
+    fetchData(currentType);
+    startCountdown();
   });
 
   // --- Fetch data + render ---
@@ -50,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     fetch(`/psmax/data?type=${type}`)
       .then((res) => res.json())
-      .then(({ models, type }) => {
+      .then(({ models }) => {
         document.getElementById("loading-spinner").style.display = "none";
         document.getElementById("main-content").style.display = "block";
         renderMain(models, type);
@@ -62,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  function renderMain(models, currentType) {
+  function renderMain(models, type) {
     scatterData = models.map((m) => [
       new Date(m.dt).getTime(),
       Number(m.max_speed),
@@ -72,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ]);
 
     selectedProduct =
-      productList.find((p) => p.productName === currentType) || productList[0];
+      productList.find((p) => p.productName === type) || productList[0];
 
     if (!chart) {
       chart = echarts.init(document.getElementById("chart"));
@@ -80,12 +89,13 @@ document.addEventListener("DOMContentLoaded", () => {
       rangeLabel = document.getElementById("rangeLabel");
     }
 
-    // setup slider fresh each time
+    // Setup slider
     if (slider) slider.noUiSlider.destroy();
     slider = document.getElementById("timeSlider");
     const times = scatterData.map((d) => d[0]);
     const minTime = Math.min(...times);
     const maxTime = Math.max(...times);
+
     noUiSlider.create(slider, {
       start: [minTime, maxTime],
       connect: true,
@@ -95,9 +105,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     slider.noUiSlider.on("update", () => {
-      rangeLabel.textContent = `Time: ${formatTime(
-        slider.noUiSlider.get()[0]
-      )} ~ ${formatTime(slider.noUiSlider.get()[1])}`;
+      const [from, to] = slider.noUiSlider.get().map(Number);
+      rangeLabel.textContent = `Time: ${formatTime(from)} ~ ${formatTime(to)}`;
       refreshChart();
     });
 
@@ -113,98 +122,105 @@ document.addEventListener("DOMContentLoaded", () => {
     )} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-function buildChartOption(data, productConfig) {
-  const speeds = data.map((d) => d[1]);
-  const pressures = data.map((d) => d[2]);
-  const xMax = Math.max(...speeds, 0);
-  const yMax = Math.max(...pressures, 0);
+  function buildChartOption(data, productConfig) {
+    const speeds = data.map((d) => d[1]);
+    const pressures = data.map((d) => d[2]);
+    const xMax = Math.max(...speeds, 0);
+    const yMax = Math.max(...pressures, 0);
 
-  let markLine = null;
-  let okData = data;
-  let ngData = [];
+    let markLine = null;
+    let okData = data;
+    let ngData = [];
 
-  if (productConfig) {
-    const sMin = productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
-    const sMax = productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
-    const pMin = productConfig.castingPressure.target - productConfig.castingPressure.tolerance;
-    const pMax = productConfig.castingPressure.target + productConfig.castingPressure.tolerance;
+    if (productConfig) {
+      const sMin =
+        productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
+      const sMax =
+        productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
+      const pMin =
+        productConfig.castingPressure.target -
+        productConfig.castingPressure.tolerance;
+      const pMax =
+        productConfig.castingPressure.target +
+        productConfig.castingPressure.tolerance;
 
-    // Split OK vs NG points
-    okData = data.filter(d => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax);
-    ngData = data.filter(d => !okData.includes(d));
+      okData = data.filter(
+        (d) => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax
+      );
+      ngData = data.filter((d) => !okData.includes(d));
 
-    markLine = {
-      silent: true,
-      lineStyle: { type: "dashed", color: "red" },
-      
-      data: [
-        { xAxis: sMin }, { xAxis: sMax },
-        { yAxis: pMin }, { yAxis: pMax },
+      markLine = {
+        silent: true,
+        lineStyle: { type: "dashed", color: "red" },
+        data: [
+          { xAxis: sMin },
+          { xAxis: sMax },
+          { yAxis: pMin },
+          { yAxis: pMax },
+        ],
+      };
+    }
+
+    return {
+      tooltip: {
+        trigger: "item",
+        formatter: (params) => {
+          const [timestamp, speed, pressure, id] = params.data;
+          return `<b>ID:</b> ${id}<br/><b>Time:</b> ${formatTime(
+            timestamp
+          )}<br/><b>Max Speed:</b> ${speed.toFixed(
+            2
+          )}<br/><b>Max Pressure:</b> ${pressure.toFixed(2)}`;
+        },
+      },
+      xAxis: {
+        type: "value",
+        name: "Max Speed(cm/s)",
+        min: 0,
+        max: xMax + 100,
+        nameLocation: "center",
+        nameGap: 35,
+        nameTextStyle: { fontSize: 20, fontWeight: "bold" },
+        axisLabel: { fontSize: 20 },
+      },
+      yAxis: {
+        type: "value",
+        name: "Max Pressure(bar)",
+        min: 0,
+        max: yMax + 100,
+        nameLocation: "center",
+        nameGap: 50,
+        nameTextStyle: { fontSize: 20, fontWeight: "bold" },
+        axisLabel: { fontSize: 20 },
+      },
+      series: [
+        {
+          name: "OK",
+          type: "scatter",
+          symbolSize: 10,
+          data: okData,
+          itemStyle: { color: "green" },
+          encode: { x: 1, y: 2 },
+          animation: false,
+          markLine,
+        },
+        {
+          name: "NG",
+          type: "scatter",
+          symbolSize: 10,
+          data: ngData,
+          itemStyle: { color: "red" },
+          encode: { x: 1, y: 2 },
+          animation: false,
+        },
       ],
     };
   }
 
-  return {
-    tooltip: {
-      trigger: "item",
-      formatter: function (params) {
-        const [timestamp, speed, pressure, id] = params.data;
-        const formattedTime = formatTime(timestamp);
-        return `
-          <b>ID:</b> ${id}<br/>
-          <b>Time:</b> ${formattedTime}<br/>
-          <b>Max Speed:</b> ${speed.toFixed(2)}<br/>
-          <b>Max Pressure:</b> ${pressure.toFixed(2)}
-        `;
-      },
-    },
-    xAxis: {
-      type: "value",
-      name: "Max Speed(cm/s)",
-      min: 0,
-      max: xMax + 100,
-      nameLocation: "center",
-      nameGap: 35,
-      nameTextStyle: { fontSize: 20, fontWeight: "bold" },
-      axisLabel: { fontSize: 20 },
-    },
-    yAxis: {
-      type: "value",
-      name: "Max Pressure(bar)",
-      min: 0,
-      max: yMax + 100,
-      nameLocation: "center",
-      nameGap: 50,
-      nameTextStyle: { fontSize: 20, fontWeight: "bold" },
-      axisLabel: { fontSize: 20 },
-    },
-    series: [
-      {
-        name: "OK",
-        type: "scatter",
-        symbolSize: 10,
-        data: okData,
-        itemStyle: { color: "green" },
-        encode: { x: 1, y: 2 },
-        animation: false,
-        markLine,
-      },
-      {
-        name: "NG",
-        type: "scatter",
-        symbolSize: 10,
-        data: ngData,
-        itemStyle: { color: "red" },
-        encode: { x: 1, y: 2 },
-        animation: false,
-      },
-    ],
-  };
-}
-
   function updateStatsTable(data) {
     statsTableBody.innerHTML = "";
     if (!selectedProduct) return;
+
     const p = selectedProduct;
     const pData = data.filter((d) => d[4] === p.productName);
     const total = pData.length;
@@ -242,4 +258,55 @@ function buildChartOption(data, productConfig) {
     chart.setOption(buildChartOption(filtered, selectedProduct));
     updateStatsTable(filtered);
   }
+
+  // --- Countdown ---
+  const refreshBtn = document.getElementById("refreshControl");
+const refreshIcon = document.getElementById("refreshIcon");
+
+  function startCountdown() {
+    clearInterval(countdownInterval);
+    if (!autoRefresh) return;
+
+    countdownInterval = setInterval(() => {
+      document.getElementById(
+        "countdown"
+      ).innerText = `Refreshing in: ${timeLeft}s`;
+      timeLeft--;
+      if (timeLeft < 0) {
+        fetchData(currentType);
+        timeLeft = refreshTime;
+      }
+    }, 1000);
+  }
+
+  refreshBtn.addEventListener("click", () => {
+    autoRefresh = !autoRefresh;
+    if (autoRefresh) {
+      refreshIcon.innerText = "pause";
+      startCountdown();
+    } else {
+      refreshIcon.innerText = "play_arrow";
+      clearInterval(countdownInterval);
+    }
+  });
+
+  function startCountdown() {
+    clearInterval(countdownInterval);
+    if (!autoRefresh) return;
+
+   countdownInterval = setInterval(() => {
+    document.getElementById(
+      "countdown"
+    ).innerText = `Refreshing in: ${timeLeft}s`;
+    timeLeft--;
+    if (timeLeft < 0) {
+      fetchData(currentType);
+      timeLeft = refreshTime;
+    }
+  }, 1000);
+  }
+
+   
+  // --- Start countdown ---
+  startCountdown();
 });
