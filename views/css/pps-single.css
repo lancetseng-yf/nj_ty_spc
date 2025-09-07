@@ -81,3 +81,21 @@ h1 {
   color: #555;
   height: 200px;
 }
+
+#refreshControl {
+  margin-left: 10px;
+}
+
+#countdown {
+  font-size: 16px;
+  margin: 10px 0;
+  font-weight: bold;
+}
+#refreshControl {
+  background: none;
+  border: none;
+  cursor: pointer;
+  vertical-align: middle;
+  font-size: 24px;
+  margin-left: 10px;
+}

@@ -1,6 +1,7 @@
 const chart = echarts.init(document.getElementById("chart"));
 let models = [];
 let currentIndex = 0;
+let currentType = document.getElementById("productSelect").value;
 
 // --- Chart Option Builder ---
 function buildChartOption(model) {
@@ -12,26 +13,23 @@ function buildChartOption(model) {
       top: 10,
       textStyle: { fontSize: 24 },
     },
-    // Adjustments to the legend
     legend: {
       data: ["Pressure", "Position", "Speed"],
       textStyle: { fontSize: 20 },
-      top: "auto", // Reset default top
-      bottom: 20, // Move legend to the bottom
+      top: "auto",
+      bottom: 20,
     },
     tooltip: {
       trigger: "axis",
       formatter: function (params) {
         let idx = params[0].dataIndex + 1;
-        let tooltipText = `Index: ${idx}<br/>`;
-        tooltipText += `Biscuit: ${model.sm}<br/>`;
+        let tooltipText = `Index: ${idx}<br/>Biscuit: ${model.sm}<br/>`;
         params.forEach((p) => {
           let displayValue =
             p.seriesName === "Pressure" || p.seriesName === "Speed"
               ? p.data / 15
               : p.data;
-          tooltipText += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color}"></span>`;
-          tooltipText += `${p.seriesName}: ${displayValue}<br/>`;
+          tooltipText += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color}"></span>${p.seriesName}: ${displayValue}<br/>`;
         });
         return tooltipText;
       },
@@ -51,25 +49,13 @@ function buildChartOption(model) {
       },
     },
     dataZoom: [{ type: "inside", start: 0, end: 100 }],
-    // Add padding to the chart to prevent elements from crowding the edges
-    grid: {
-      top: 80,
-      bottom: 100, // Make room for the legend and x-axis labels
-      left: 80,
-      right: 20,
-    },
-    // Adjustments to the xAxis
+    grid: { top: 80, bottom: 100, left: 80, right: 20 },
     xAxis: {
       type: "category",
       boundaryGap: false,
       data: model.position.map((_, i) => i + 1),
-      axisLabel: {
-        fontSize: 20,
-        rotate: 30,
-        interval: "auto", // ECharts will automatically decide which labels to display to avoid overlap
-      },
+      axisLabel: { fontSize: 20, rotate: 30, interval: "auto" },
       name: "Time(s)",
-   
       nameGap: 50,
       nameTextStyle: { fontSize: 20, fontWeight: "bold" },
     },
@@ -105,7 +91,6 @@ function renderChart() {
 // --- Fetch Data ---
 function fetchData(type) {
   document.getElementById("loading-spinner").style.display = "block";
-
   chart.clear();
   fetch(`/pps/single/data?type=${type}`)
     .then((res) => res.json())
@@ -124,27 +109,63 @@ function fetchData(type) {
     });
 }
 
+// --- Timestamp Formatter ---
 function formatTimestamp(dt) {
   const date = new Date(dt);
   const pad = (num) => num.toString().padStart(2, "0");
-
-  const year = date.getUTCFullYear();
-  const month = pad(date.getUTCMonth() + 1); // getUTCMonth() is 0-indexed
-  const day = pad(date.getUTCDate());
-  const hours = pad(date.getUTCHours());
-  const minutes = pad(date.getUTCMinutes());
-  const seconds = pad(date.getUTCSeconds());
-
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(
+    date.getUTCDate()
+  )} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(
+    date.getUTCSeconds()
+  )}`;
 }
+
+// --- Countdown & Auto Refresh ---
+let refreshTime = 30; // seconds
+let timeLeft = refreshTime;
+let autoRefresh = true;
+let countdownInterval;
+
+function startCountdown() {
+  clearInterval(countdownInterval);
+  if (!autoRefresh) return;
+
+  countdownInterval = setInterval(() => {
+    document.getElementById(
+      "countdown"
+    ).innerText = `Refreshing in: ${timeLeft}s`;
+    timeLeft--;
+    if (timeLeft < 0) {
+      fetchData(currentType);
+      timeLeft = refreshTime;
+    }
+  }, 1000);
+}
+
+// --- Pause/Start Button ---
+const refreshBtn = document.getElementById("refreshControl");
+const refreshIcon = document.getElementById("refreshIcon");
+
+refreshBtn.addEventListener("click", () => {
+  autoRefresh = !autoRefresh;
+  if (autoRefresh) {
+    refreshIcon.innerText = "pause";
+    startCountdown();
+  } else {
+    refreshIcon.innerText = "play_arrow";
+    clearInterval(countdownInterval);
+  }
+});
 
 // --- Product Change ---
 document.getElementById("productSelect").addEventListener("change", () => {
-  const type = document.getElementById("productSelect").value;
-  fetchData(type);
+  currentType = document.getElementById("productSelect").value;
+  timeLeft = refreshTime;
+  fetchData(currentType);
+  startCountdown();
 });
 
-// --- Prev/Next ---
+// --- Prev/Next Buttons ---
 document.getElementById("prevBtn").addEventListener("click", () => {
   currentIndex--;
   renderChart();
@@ -154,5 +175,9 @@ document.getElementById("nextBtn").addEventListener("click", () => {
   renderChart();
 });
 
-// --- Initial Fetch ---
-fetchData("<%= type %>");
+// --- Initial Load ---
+fetchData(currentType);
+startCountdown();
+
+// --- Resize ---
+window.addEventListener("resize", () => chart.resize());
