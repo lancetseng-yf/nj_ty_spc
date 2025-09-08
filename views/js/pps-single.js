@@ -8,7 +8,7 @@ function buildChartOption(model) {
   if (!model) return {};
   return {
     title: {
-      text: `${model.type || "N/A"} - ${formatTimestamp(model.dt)}`,
+      text: `${model.type || "N/A"} - ${model.dt}`,
       left: "center",
       top: 10,
       textStyle: { fontSize: 24 },
@@ -78,6 +78,7 @@ function buildChartOption(model) {
 
 // --- Render Chart ---
 function renderChart() {
+ 
   if (models.length === 0) {
     chart.clear();
     chart.setOption({ title: { text: "No Data" } });
@@ -85,6 +86,7 @@ function renderChart() {
   }
   if (currentIndex >= models.length) currentIndex = models.length - 1;
   if (currentIndex < 0) currentIndex = 0;
+ 
   chart.setOption(buildChartOption(models[currentIndex]));
 }
 
@@ -100,6 +102,7 @@ function fetchData(type) {
     .then((res) => res.json())
     .then(({ models: m }) => {
       models = m;
+      models = m.sort((a, b) => new Date(a.dt) - new Date(b.dt));
       currentIndex = models.length > 0 ? models.length - 1 : 0;
       renderChart();
     })

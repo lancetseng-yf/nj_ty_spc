@@ -72,8 +72,8 @@ async function fetchPpsData(type, limit) {
       limit: limit,
       order: [["dt", "DESC"]],
     });
-    const dataFromDb = dataFromDbDesc.reverse();
-    return dataFromDb.map((item) => mapDbItemToModel(item, rawModel));
+ 
+    return dataFromDbDesc.map((item) => mapDbItemToModel(item, rawModel));
   } catch (error) {
     console.error("Error fetching data:", error);
     throw new Error("Server Error");
