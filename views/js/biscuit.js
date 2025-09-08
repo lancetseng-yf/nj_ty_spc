@@ -162,10 +162,13 @@ function buildChartOption(filteredData, config) {
 
 // --- Fetch & Render ---
 function loadData(type) {
+  // ⏸ stop countdown while fetching
+  clearInterval(countdownInterval);
+
   loadingEl.style.display = "flex";
   chartEl.style.display = "none";
 
-  fetch(`/biscuit/data?type=${type}`)
+  return fetch(`/biscuit/data?type=${type}`)
     .then((res) => res.json())
     .then((data) => {
       const models = data.models || [];
@@ -179,6 +182,10 @@ function loadData(type) {
       loadingEl.style.display = "none";
       chartEl.style.display = "block";
       requestAnimationFrame(() => chart.resize());
+
+      // ✅ restart countdown only after render is done
+      timeLeft = refreshTime;
+      if (autoRefresh) startCountdown(type);
     });
 }
 
@@ -220,8 +227,9 @@ refreshBtn.addEventListener("click", () => {
 });
 
 // --- Initial Load ---
+
 loadData(currentType);
-startCountdown(currentType);
+// startCountdown(currentType);
 
 // --- Product Selection ---
 document.getElementById("productSelect").addEventListener("change", (e) => {

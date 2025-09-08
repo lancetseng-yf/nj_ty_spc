@@ -54,6 +54,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Fetch data + render ---
   function fetchData(type) {
+    // Stop countdown while fetching
+    clearInterval(countdownInterval);
+
     document.getElementById("loading-spinner").style.display = "block";
     document.getElementById("main-content").style.display = "none";
 
@@ -68,6 +71,11 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error(err);
         document.getElementById("loading-spinner").innerHTML =
           "Failed to load data!";
+      })
+      .finally(() => {
+        // Reset countdown after fetch completes
+        timeLeft = refreshTime;
+        startCountdown();
       });
   }
 
@@ -261,7 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Countdown ---
   const refreshBtn = document.getElementById("refreshControl");
-const refreshIcon = document.getElementById("refreshIcon");
+  const refreshIcon = document.getElementById("refreshIcon");
 
   function startCountdown() {
     clearInterval(countdownInterval);
@@ -294,19 +302,17 @@ const refreshIcon = document.getElementById("refreshIcon");
     clearInterval(countdownInterval);
     if (!autoRefresh) return;
 
-   countdownInterval = setInterval(() => {
-    document.getElementById(
-      "countdown"
-    ).innerText = `Refreshing in: ${timeLeft}s`;
-    timeLeft--;
-    if (timeLeft < 0) {
-      fetchData(currentType);
-      timeLeft = refreshTime;
-    }
-  }, 1000);
+    countdownInterval = setInterval(() => {
+      document.getElementById(
+        "countdown"
+      ).innerText = `Refreshing in: ${timeLeft}s`;
+      timeLeft--;
+      if (timeLeft < 0) {
+        fetchData(currentType);
+        timeLeft = refreshTime;
+      }
+    }, 1000);
   }
 
-   
   // --- Start countdown ---
-  startCountdown();
 });

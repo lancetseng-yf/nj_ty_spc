@@ -90,14 +90,17 @@ function renderChart() {
 
 // --- Fetch Data ---
 function fetchData(type) {
+  // ⏸ Stop countdown while fetching
+  clearInterval(countdownInterval);
+
   document.getElementById("loading-spinner").style.display = "block";
   chart.clear();
+
   fetch(`/pps/single/data?type=${type}`)
     .then((res) => res.json())
     .then(({ models: m }) => {
       models = m;
       currentIndex = models.length > 0 ? models.length - 1 : 0;
-      document.getElementById("loading-spinner").style.display = "none";
       renderChart();
     })
     .catch((err) => {
@@ -106,6 +109,13 @@ function fetchData(type) {
       chart.setOption({ title: { text: "Error Loading Data" } });
       document.getElementById("loading-spinner").innerHTML =
         "⚠ Failed to load data!";
+    })
+    .finally(() => {
+      document.getElementById("loading-spinner").style.display = "none";
+
+      // ✅ Restart countdown cleanly after data finishes loading
+      timeLeft = refreshTime;
+      if (autoRefresh) startCountdown();
     });
 }
 
@@ -113,10 +123,10 @@ function fetchData(type) {
 function formatTimestamp(dt) {
   const date = new Date(dt);
   const pad = (num) => num.toString().padStart(2, "0");
-  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(
-    date.getUTCDate()
-  )} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(
-    date.getUTCSeconds()
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDay()
+  )} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
+    date.getSeconds()
   )}`;
 }
 
@@ -177,7 +187,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
 
 // --- Initial Load ---
 fetchData(currentType);
-startCountdown();
+// startCountdown();
 
 // --- Resize ---
 window.addEventListener("resize", () => chart.resize());

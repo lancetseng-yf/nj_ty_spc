@@ -167,6 +167,9 @@ function buildChartOption(models) {
 }
 
 function loadData(type) {
+  // ⏸ Stop countdown while fetching
+  clearInterval(countdownInterval);
+
   loadingEl.style.display = "flex";
   chartEl.style.display = "none";
 
@@ -184,9 +187,12 @@ function loadData(type) {
     .finally(() => {
       loadingEl.style.display = "none";
       chartEl.style.display = "block";
+
+      // ✅ Restart countdown only after data has rendered
+      timeLeft = refreshTime;
+      if (autoRefresh) startCountdown(type);
     });
 }
-
 // --- Countdown logic ---
 function startCountdown(type) {
   clearInterval(countdownInterval);
@@ -224,4 +230,4 @@ productSelect.addEventListener("change", (e) => {
 });
 
 loadData("<%= type %>");
-startCountdown("<%= type %>");
+// startCountdown("<%= type %>");
