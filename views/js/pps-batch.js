@@ -7,7 +7,7 @@ const countdownLabel = document.getElementById("countdown");
 const refreshBtn = document.getElementById("refreshControl");
 const refreshIcon = document.getElementById("refreshIcon");
 
-let refreshTime = 30; // seconds
+let refreshTime = 105; // seconds
 let timeLeft = refreshTime;
 let countdownInterval;
 let autoRefresh = true;

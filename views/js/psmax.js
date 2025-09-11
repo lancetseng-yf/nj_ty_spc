@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentType = initialType;
 
   // Auto-refresh
-  let refreshTime = 30; // seconds
+  let refreshTime = 105; // seconds
   let timeLeft = refreshTime;
   let autoRefresh = true;
   let countdownInterval;

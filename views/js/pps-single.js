@@ -134,7 +134,7 @@ function formatTimestamp(dt) {
 }
 
 // --- Countdown & Auto Refresh ---
-let refreshTime = 30; // seconds
+let refreshTime = 105; // seconds
 let timeLeft = refreshTime;
 let autoRefresh = true;
 let countdownInterval;

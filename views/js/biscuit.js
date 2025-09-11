@@ -18,7 +18,7 @@ const productConfig = {
 function buildChartOption(filteredData, config) {
   const smValues = filteredData.map((d) => Number(d.sm));
   const minY = 0;
-  const maxY = Math.max(...smValues, config.ucl + 50);
+  const maxY = 105;
 
   const normal = filteredData
     .filter((d) => d.sm >= config.lcl && d.sm <= config.ucl)
@@ -35,7 +35,7 @@ function buildChartOption(filteredData, config) {
   const above = filteredData
     .filter((d) => d.sm > config.ucl)
     .map((d) => ({
-      value: [new Date(d.dt).getTime(), d.sm],
+      value: [new Date(d.dt).getTime(), d.sm > 100 ? 100 : d.sm],
       id: d.diecasting_eigenvalue_data_id,
     }));
 
@@ -190,7 +190,7 @@ function loadData(type) {
 }
 
 // --- Countdown / Auto Refresh ---
-let refreshTime = 30; // seconds
+let refreshTime = 105; // seconds
 let countdownInterval;
 let timeLeft = refreshTime;
 let autoRefresh = true;
