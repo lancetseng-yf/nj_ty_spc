@@ -6,12 +6,16 @@ const chart = echarts.init(chartEl);
 const countdownLabel = document.getElementById("countdown");
 const refreshBtn = document.getElementById("refreshControl");
 const refreshIcon = document.getElementById("refreshIcon");
+const submitBtn = document.getElementById("submitBtn");
+const dateFromEl = document.getElementById("datetimeFrom");
+const dateToEl = document.getElementById("datetimeTo");
 
 let refreshTime = 105; // seconds
 let timeLeft = refreshTime;
 let countdownInterval;
 let autoRefresh = true;
 
+// --- Utility ---
 function fmtDateYMDHMS(d) {
   const pad = (n) => (n < 10 ? "0" + n : n);
   return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(
@@ -28,6 +32,7 @@ function buildTimeValuePairs(arr, dt, id) {
   }));
 }
 
+// --- Chart builder ---
 function buildChartOption(models) {
   const posData = [],
     pressData = [],
@@ -75,8 +80,7 @@ function buildChartOption(models) {
         const sm = model?.sm ?? "N/A";
 
         return (
-          `<b>Time:</b> ${time}<br>
-                <b>Biscuit:</b> ${sm}<br>` +
+          `<b>Time:</b> ${time}<br><b>Biscuit:</b> ${sm}<br>` +
           params
             .map(
               (p) =>
@@ -112,7 +116,7 @@ function buildChartOption(models) {
     xAxis: {
       type: "time",
       name: "Time(s)",
-      nameTextStyle: { fontSize: 20, fontWeight: "bold", color: "#333" },
+      nameTextStyle: { fontSize: 20, fontWeight: "bold" },
       splitLine: { show: true },
       axisLabel: { fontSize: 20, rotate: 30 },
     },
@@ -121,7 +125,7 @@ function buildChartOption(models) {
       name: "Value",
       nameLocation: "middle",
       nameGap: 20,
-      nameTextStyle: { fontSize: 20, fontWeight: "bold", color: "#333" },
+      nameTextStyle: { fontSize: 20, fontWeight: "bold" },
       min: 0,
       splitLine: { show: true },
       axisLabel: { fontSize: 20 },
@@ -164,14 +168,18 @@ function buildChartOption(models) {
   };
 }
 
-function loadData(type) {
-  // ⏸ Stop countdown while fetching
+// --- Load data with optional date range ---
+function loadData(type, dateFrom = "", dateTo = "") {
   clearInterval(countdownInterval);
 
   loadingEl.style.display = "flex";
   chartEl.style.display = "none";
 
-  fetch(`/pps/batch/data?type=${type}`)
+  let url = `/pps/batch/data?type=${type}`;
+  if (dateFrom) url += `&dateFrom=${encodeURIComponent(dateFrom)}`;
+  if (dateTo) url += `&dateTo=${encodeURIComponent(dateTo)}`;
+
+  fetch(url)
     .then((res) => res.json())
     .then((data) => {
       const models = data.models || [];
@@ -185,13 +193,12 @@ function loadData(type) {
     .finally(() => {
       loadingEl.style.display = "none";
       chartEl.style.display = "block";
-
-      // ✅ Restart countdown only after data has rendered
       timeLeft = refreshTime;
       if (autoRefresh) startCountdown(type);
     });
 }
-// --- Countdown logic ---
+
+// --- Countdown ---
 function startCountdown(type) {
   clearInterval(countdownInterval);
   if (!autoRefresh) return;
@@ -200,32 +207,48 @@ function startCountdown(type) {
     countdownLabel.innerText = `Refreshing in: ${timeLeft}s`;
     timeLeft--;
     if (timeLeft < 0) {
-      loadData(type);
+      loadData(type, dateFromEl.value, dateToEl.value);
       timeLeft = refreshTime;
     }
   }, 1000);
 }
 
-// Pause/Start toggle
+// --- Pause/Resume ---
 refreshBtn.addEventListener("click", () => {
   autoRefresh = !autoRefresh;
   clearInterval(countdownInterval);
-
-  if (autoRefresh) {
-    refreshIcon.innerText = "pause";
-    // timeLeft = refreshTime; // reset timer
-    startCountdown(productSelect.value);
-  } else {
-    refreshIcon.innerText = "play_arrow";
-  }
+  refreshIcon.innerText = autoRefresh ? "pause" : "play_arrow";
+  if (autoRefresh) startCountdown(productSelect.value);
 });
 
-// --- Init ---
+// --- Product change ---
 productSelect.addEventListener("change", (e) => {
   timeLeft = refreshTime;
   loadData(e.target.value);
   startCountdown(e.target.value);
+
+  dateFromEl.value = "";
+  dateToEl.value = "";
 });
 
+// --- Manual date filter submit ---
+if (submitBtn) {
+  submitBtn.addEventListener("click", (e) => {
+    e.preventDefault(); // prevent page reload
+
+    const dateFrom = document.getElementById("datetimeFrom").value;
+    const dateTo = document.getElementById("datetimeTo").value;
+
+    // Stop auto-refresh
+    autoRefresh = false;
+    refreshIcon.innerText = "play_arrow";
+    clearInterval(countdownInterval);
+
+    // Load data with date range
+    loadData(productSelect.value, dateFrom, dateTo);
+  });
+}
+
+// --- Initial load ---
 loadData("<%= type %>");
-// startCountdown("<%= type %>");
+window.addEventListener("resize", () => chart.resize());
