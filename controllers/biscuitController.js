@@ -1,6 +1,7 @@
 const DiecastingEigenvalueData = require("../models/diecasting_eigenvalue_data");
 const modelJson = require("../models/biscuit_thick_model.json");
-const { Op } = require("sequelize");
+const { Op, literal  } = require("sequelize");
+const { parse, isValid } = require("date-fns");
 
 // --- Code mapping ---
 const CODE_MAP = {
@@ -37,20 +38,40 @@ function mapDbItemToModel(item, rawModel) {
 
 exports.getBiscuitData = async (req, res) => {
   const typeSelect = req.query.type || "LL";
+  const dateFrom = req.query.dateFrom;
+  const dateTo = req.query.dateTo;
   const lasercode = getLaserCode(typeSelect);
   const rawModel = modelJson || {};
 
+  console.log(`Fr:${dateFrom} To:${dateTo}`);
+
   try {
-    const dataFromDb = await DiecastingEigenvalueData.findAll({
-      where: {
-        speed: { [Op.ne]: null },
-        position: { [Op.ne]: null },
-        casting_pressure: { [Op.ne]: null },
-        lasercode: { [Op.like]: `%${lasercode}%` },
-      },
-      limit: 500,
+    const whereClause = {
+      speed: { [Op.ne]: null },
+      position: { [Op.ne]: null },
+      casting_pressure: { [Op.ne]: null },
+      lasercode: { [Op.like]: `%${lasercode}%` },
+    };
+
+    if (dateFrom && dateTo) {
+      // 使用 date-fns.parse 精確解析日期字串
+       
+      whereClause.dt = {
+      [Op.between]: [literal(`'${dateFrom}'`), literal(`'${dateTo}'`)]
+      };
+    }
+
+    const queryOptions = {
+      where: whereClause,
       order: [["dt", "DESC"]],
-    });
+    };
+
+    // Apply limit only if date range is not provided
+    if (!dateFrom || !dateTo) {
+      queryOptions.limit = 500;
+    }
+
+    const dataFromDb = await DiecastingEigenvalueData.findAll(queryOptions);
 
     const modelArray = dataFromDb.map((item) =>
       mapDbItemToModel(item, rawModel)

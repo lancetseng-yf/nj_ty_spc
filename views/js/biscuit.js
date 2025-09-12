@@ -1,43 +1,64 @@
+const pad = (n) => (n < 10 ? "0" + n : n);
+
+const formatDateTime = (timestamp) => {
+  const d = new Date(timestamp);
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(
+    d.getHours()
+  )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+
+const formatDate = (timestamp) => {
+  const d = new Date(timestamp);
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+};
+
 const chart = echarts.init(document.getElementById("chart"));
 const loadingEl = document.getElementById("loading-spinner");
 const chartEl = document.getElementById("chart");
 
+const createProductConfig = (mean, range) => ({
+  mean,
+  ucl: mean + range,
+  lcl: mean - range,
+});
+
 const PRODUCT_MEAN = 38;
-const PRODUCT_UCL = PRODUCT_MEAN + 6;
-const PRODUCT_LCL = PRODUCT_MEAN - 6;
+const PRODUCT_RANGE = 6;
 
 const productConfig = {
-  LL: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
-  LR: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
-  ML: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
-  MR: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
-  ZP: { mean: PRODUCT_MEAN, ucl: PRODUCT_UCL, lcl: PRODUCT_LCL },
+  LL: createProductConfig(PRODUCT_MEAN, PRODUCT_RANGE),
+  LR: createProductConfig(PRODUCT_MEAN, PRODUCT_RANGE),
+  ML: createProductConfig(PRODUCT_MEAN, PRODUCT_RANGE),
+  MR: createProductConfig(PRODUCT_MEAN, PRODUCT_RANGE),
+  ZP: createProductConfig(PRODUCT_MEAN, PRODUCT_RANGE),
 };
 
-// --- Chart Option Builder (same as before) ---
+// Helper to format data for chart series
+const formatSeriesData = (data, config) => {
+  const mapDataPoint = (d) => ({
+    value: [new Date(d.dt).getTime(), d.sm],
+    id: d.diecasting_eigenvalue_data_id,
+  });
+
+  return {
+    normal: data
+      .filter((d) => d.sm >= config.lcl && d.sm <= config.ucl)
+      .map(mapDataPoint),
+    below: data.filter((d) => d.sm < config.lcl).map(mapDataPoint),
+    above: data
+      .filter((d) => d.sm > config.ucl)
+      .map((d) => ({
+        value: [new Date(d.dt).getTime(), d.sm > 100 ? 100 : d.sm],
+        id: d.diecasting_eigenvalue_data_id,
+      })),
+  };
+};
+
+// --- Chart Option Builder ---
 function buildChartOption(filteredData, config) {
-  const smValues = filteredData.map((d) => Number(d.sm));
+  const { normal, below, above } = formatSeriesData(filteredData, config);
   const minY = 0;
   const maxY = 105;
-
-  const normal = filteredData
-    .filter((d) => d.sm >= config.lcl && d.sm <= config.ucl)
-    .map((d) => ({
-      value: [new Date(d.dt).getTime(), d.sm],
-      id: d.diecasting_eigenvalue_data_id,
-    }));
-  const below = filteredData
-    .filter((d) => d.sm < config.lcl)
-    .map((d) => ({
-      value: [new Date(d.dt).getTime(), d.sm],
-      id: d.diecasting_eigenvalue_data_id,
-    }));
-  const above = filteredData
-    .filter((d) => d.sm > config.ucl)
-    .map((d) => ({
-      value: [new Date(d.dt).getTime(), d.sm > 100 ? 100 : d.sm],
-      id: d.diecasting_eigenvalue_data_id,
-    }));
 
   return {
     legend: {
@@ -49,11 +70,7 @@ function buildChartOption(filteredData, config) {
       trigger: "item",
       formatter: (p) => {
         if (p.componentType === "markLine") return `${p.name}: ${p.value}`;
-        const d = new Date(p.value[0]);
-        const pad = (n) => (n < 10 ? "0" + n : n);
-        const dateStr = `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(
-          d.getDate()
-        )} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        const dateStr = formatDateTime(p.value[0]);
         return `<b>ID:</b> ${p.data.id}<br/><b>Time:</b> ${dateStr}<br/><b>SM:</b> ${p.value[1]}`;
       },
     },
@@ -81,13 +98,7 @@ function buildChartOption(filteredData, config) {
         fontSize: 18,
         interval: "auto",
         rotate: 30,
-        formatter: (val) => {
-          const d = new Date(val);
-          const pad = (n) => (n < 10 ? "0" + n : n);
-          return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(
-            d.getDate()
-          )}`;
-        },
+        formatter: (val) => formatDate(val),
       },
       splitLine: { show: true },
       minInterval: 24 * 60 * 60 * 1000,
@@ -161,83 +172,129 @@ function buildChartOption(filteredData, config) {
 }
 
 // --- Fetch & Render ---
-function loadData(type) {
-  // ⏸ stop countdown while fetching
-  clearInterval(countdownInterval);
+const renderChart = (data, type) => {
+  const models = data.models || [];
+  chart.setOption(buildChartOption(models, productConfig[type]));
+  loadingEl.style.display = "none";
+  chartEl.style.display = "block";
+  requestAnimationFrame(() => chart.resize());
+};
 
+const fetchData = async (type, dateFrom = null, dateTo = null) => {
   loadingEl.style.display = "flex";
   chartEl.style.display = "none";
+  try {
+    let url = `/biscuit/data?type=${type}`;
+    if (dateFrom && dateTo) {
+      url += `&dateFrom=${dateFrom}&dateTo=${dateTo}`;
+    }
+    const res = await fetch(url);
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error("Error in fetchData:", err);
+    loadingEl.textContent = "Failed to load data!";
+    throw err;
+  }
+};
 
-  return fetch(`/biscuit/data?type=${type}`)
-    .then((res) => res.json())
-    .then((data) => {
-      const models = data.models || [];
-      chart.setOption(buildChartOption(models, productConfig[type]));
-    })
-    .catch((err) => {
-      console.error("Error in loadData:", err);
-      loadingEl.textContent = "Failed to load data!";
-    })
-    .finally(() => {
-      loadingEl.style.display = "none";
-      chartEl.style.display = "block";
-      requestAnimationFrame(() => chart.resize());
-
-      // ✅ restart countdown only after render is done
-      timeLeft = refreshTime;
-      if (autoRefresh) startCountdown(type);
-    });
+async function loadData(type, dateFrom = null, dateTo = null) {
+  clearInterval(refreshManager.countdownInterval); // Pause countdown
+  try {
+    const data = await fetchData(type, dateFrom, dateTo);
+    renderChart(data, type);
+  } catch (error) {
+    // Error already handled in fetchData
+  } finally {
+    refreshManager.resetCountdown(type);
+  }
 }
 
 // --- Countdown / Auto Refresh ---
-let refreshTime = 105; // seconds
-let countdownInterval;
-let timeLeft = refreshTime;
-let autoRefresh = true;
-const refreshIcon = document.getElementById("refreshIcon");
+const refreshManager = (() => {
+  let refreshTime = 105; // seconds
+  let countdownInterval;
+  let timeLeft = refreshTime;
+  let autoRefresh = true;
+  const refreshIcon = document.getElementById("refreshIcon");
+  const countdownEl = document.getElementById("countdown");
 
-function startCountdown(type) {
-  clearInterval(countdownInterval);
-  if (!autoRefresh) return;
+  const startCountdown = (type) => {
+    clearInterval(countdownInterval);
+    if (!autoRefresh) return;
 
-  countdownInterval = setInterval(() => {
-    document.getElementById(
-      "countdown"
-    ).innerText = `Refreshing in: ${timeLeft}s`;
-    timeLeft--;
+    countdownInterval = setInterval(() => {
+      countdownEl.innerText = `Refreshing in: ${timeLeft}s`;
+      timeLeft--;
 
-    if (timeLeft < 0) {
-      loadData(type);
-      timeLeft = refreshTime;
+      if (timeLeft < 0) {
+        loadData(type);
+        timeLeft = refreshTime;
+      }
+    }, 1000);
+  };
+
+  const toggleRefresh = (type) => {
+    autoRefresh = !autoRefresh;
+    if (autoRefresh) {
+      refreshIcon.innerText = "pause";
+      startCountdown(type);
+    } else {
+      refreshIcon.innerText = "play_arrow";
+      clearInterval(countdownInterval);
     }
-  }, 1000);
-}
+  };
+
+  const pauseRefresh = () => {
+    clearInterval(countdownInterval);
+    autoRefresh = false;
+    refreshIcon.innerText = "play_arrow";
+  };
+
+  const resetCountdown = (type) => {
+    timeLeft = refreshTime;
+    if (autoRefresh) startCountdown(type);
+  };
+
+  return {
+    startCountdown,
+    toggleRefresh,
+    pauseRefresh,
+    resetCountdown,
+    getAutoRefresh: () => autoRefresh,
+  };
+})();
 
 // --- Pause / Start Button ---
 const refreshBtn = document.getElementById("refreshControl");
 refreshBtn.addEventListener("click", () => {
-  autoRefresh = !autoRefresh;
-  if (autoRefresh) {
-    refreshIcon.innerText = "pause";
-    startCountdown(currentType);
-  } else {
-    refreshIcon.innerText = "play_arrow";
-    clearInterval(countdownInterval);
-  }
+  refreshManager.toggleRefresh(currentType);
 });
 
 // --- Initial Load ---
 
+const initializeEventListeners = () => {
+  document.getElementById("productSelect").addEventListener("change", (e) => {
+    currentType = e.target.value;
+    loadData(currentType);
+    refreshManager.resetCountdown(currentType);
+  });
+
+  window.addEventListener("resize", () => chart.resize());
+
+  const submitBtn = document.getElementById("submitBtn");
+  if (submitBtn) {
+    submitBtn.addEventListener("click", (e) => {
+      e.preventDefault(); // prevent page reload
+
+      const dateFrom = document.getElementById("datetimeFrom").value + ":00";
+      const dateTo = document.getElementById("datetimeTo").value + ":59";
+      loadData(currentType, dateFrom, dateTo);
+      refreshManager.pauseRefresh(); // Always pause the timer after manual submission
+    });
+  }
+};
+
+// --- Initial Load ---
 loadData(currentType);
-// startCountdown(currentType);
-
-// --- Product Selection ---
-document.getElementById("productSelect").addEventListener("change", (e) => {
-  currentType = e.target.value;
-  loadData(currentType);
-  timeLeft = refreshTime;
-  startCountdown(currentType);
-});
-
-// --- Resize ---
-window.addEventListener("resize", () => chart.resize());
+initializeEventListeners();
