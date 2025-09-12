@@ -41,6 +41,13 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   ];
 
+  let manualControlLine = {
+    speedUcl: "",
+    speedLcl: "",
+    pressureUcl: "",
+    pressureLcl: "",
+  };
+
   // --- Init ---
   fetchData(initialType);
 
@@ -157,20 +164,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const yMax = Math.max(...pressures, 0);
 
     let markLine = null;
-    let okData = data;
-    let ngData = [];
+    let okData = data; //normal
+    let ngData = []; //warn-up
 
     if (productConfig) {
-      const sMin =
-        productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
-      const sMax =
-        productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
-      const pMin =
-        productConfig.castingPressure.target -
-        productConfig.castingPressure.tolerance;
-      const pMax =
-        productConfig.castingPressure.target +
-        productConfig.castingPressure.tolerance;
+      const sMin = manualControlLine.speedLcl
+        ? manualControlLine.speedLcl
+        : productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
+      const sMax = manualControlLine.speedUcl
+        ? manualControlLine.speedUcl
+        : productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
+      const pMin = manualControlLine.pressureLcl
+        ? manualControlLine.pressureLcl
+        : productConfig.castingPressure.target -
+          productConfig.castingPressure.tolerance;
+      const pMax = manualControlLine.pressureUcl
+        ? manualControlLine.pressureUcl
+        : productConfig.castingPressure.target +
+          productConfig.castingPressure.tolerance;
 
       okData = data.filter(
         (d) => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax
@@ -181,10 +192,26 @@ document.addEventListener("DOMContentLoaded", () => {
         silent: true,
         lineStyle: { type: "dashed", color: "red" },
         data: [
-          { xAxis: sMin },
-          { xAxis: sMax },
-          { yAxis: pMin },
-          { yAxis: pMax },
+          {
+            xAxis: manualControlLine.speedLcl
+              ? manualControlLine.speedLcl
+              : sMin,
+          },
+          {
+            xAxis: manualControlLine.speedUcl
+              ? manualControlLine.speedUcl
+              : sMax,
+          },
+          {
+            yAxis: manualControlLine.pressureLcl
+              ? manualControlLine.pressureLcl
+              : pMin,
+          },
+          {
+            yAxis: manualControlLine.pressureUcl
+              ? manualControlLine.pressureUcl
+              : pMax,
+          },
         ],
       };
     }
@@ -252,10 +279,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const p = selectedProduct;
     const pData = data.filter((d) => d[4] === p.productName);
     const total = pData.length;
-    const sMin = p.highSpeed.target - p.highSpeed.tolerance;
-    const sMax = p.highSpeed.target + p.highSpeed.tolerance;
-    const pMin = p.castingPressure.target - p.castingPressure.tolerance;
-    const pMax = p.castingPressure.target + p.castingPressure.tolerance;
+    const sMin = manualControlLine.speedLcl
+      ? manualControlLine.speedLcl
+      : p.highSpeed.target - p.highSpeed.tolerance;
+    const sMax = manualControlLine.speedUcl
+      ? manualControlLine.speedUcl
+      : p.highSpeed.target + p.highSpeed.tolerance;
+    const pMin = manualControlLine.pressureLcl
+      ? manualControlLine.pressureLcl
+      : p.castingPressure.target - p.castingPressure.tolerance;
+    const pMax = manualControlLine.pressureUcl
+      ? manualControlLine.pressureUcl
+      : p.castingPressure.target + p.castingPressure.tolerance;
     const okCount = pData.filter(
       (d) => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax
     ).length;
@@ -374,5 +409,23 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("loading-spinner").innerHTML =
           "Failed to load data!";
       });
+  }
+
+  // --- Manual Apply Limits ---
+  const applyLimitsBtn = document.getElementById("applyLimitsBtn");
+  if (applyLimitsBtn) {
+    applyLimitsBtn.addEventListener("click", () => {
+      const sMin = Number(document.getElementById("speedLCL").value);
+      const sMax = Number(document.getElementById("speedUCL").value);
+      const pMin = Number(document.getElementById("pressureLCL").value);
+      const pMax = Number(document.getElementById("pressureUCL").value);
+
+      manualControlLine.speedUcl = sMax;
+      manualControlLine.speedLcl = sMin;
+      manualControlLine.pressureUcl = pMax;
+      manualControlLine.pressureLcl = pMin;
+      // Re-render
+      refreshChart();
+    });
   }
 });

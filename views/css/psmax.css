@@ -120,3 +120,50 @@ h1 {
   font-size: 24px;
   margin-left: 10px;
 }
+
+#limitsTable {
+  width: 36%;
+  margin: 0 auto 40px auto;
+  border-collapse: collapse;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+#limitsTable th {
+  background: #f3f4f6;
+  padding: 12px 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+#limitsTable td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 8px;
+  font-size: 15px;
+  color: #374151;
+}
+
+#limitsTable tr:last-child td {
+  border-bottom: none;
+}
+
+#limitsTable button {
+  font-size: 18px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: #e5e7eb;
+  color: #111827;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+#limitsTable button:hover {
+  background-color: #d1d5db;
+}
