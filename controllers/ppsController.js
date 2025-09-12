@@ -1,6 +1,6 @@
 const DiecastingEigenvalueData = require("../models/diecasting_eigenvalue_data");
 const modelJson = require("../models/pps_model.json");
-const { Op } = require("sequelize");
+const { Op, literal } = require("sequelize");
 
 // --- Utility Functions ---
 const CODE_MAP = {
@@ -58,21 +58,37 @@ function mapDbItemToModel(item, rawModel) {
 }
 
 // --- Data Fetching Logic ---
-async function fetchPpsData(type, limit) {
+async function fetchPpsData(type, limit, dateFrom = null, dateTo = null) {
   const rawModel = modelJson || {};
   const lasercode = getLaserCode(type);
+
   try {
-    const dataFromDbDesc = await DiecastingEigenvalueData.findAll({
-      where: {
-        speed: { [Op.ne]: null },
-        position: { [Op.ne]: null },
-        casting_pressure: { [Op.ne]: null },
-        lasercode: { [Op.like]: `%${lasercode}%` },
-      },
-      limit: limit,
+    let whereCondition = {
+      speed: { [Op.ne]: null },
+      position: { [Op.ne]: null },
+      casting_pressure: { [Op.ne]: null },
+      lasercode: { [Op.like]: `%${lasercode}%` },
+    };
+
+    // ✅ Add date range if provided
+    if (dateFrom && dateTo) {
+      whereCondition.dt = {
+        [Op.between]: [literal(`'${dateFrom}'`), literal(`'${dateTo}'`)],
+      };
+    }
+
+    const queryOptions = {
+      where: whereCondition,
       order: [["dt", "DESC"]],
-    });
- 
+    };
+
+    // ✅ Only apply limit when no date range
+    if (!(dateFrom && dateTo)) {
+      queryOptions.limit = limit;
+    }
+
+    const dataFromDbDesc = await DiecastingEigenvalueData.findAll(queryOptions);
+
     return dataFromDbDesc.map((item) => mapDbItemToModel(item, rawModel));
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -88,8 +104,10 @@ exports.getBatchPage = (req, res) => {
 
 exports.getBatchData = async (req, res) => {
   const typeSelect = req.query.type || "LL";
+  const dateFrom = req.query.dateFrom;
+  const dateTo = req.query.dateTo;
   try {
-    const models = await fetchPpsData(typeSelect, 10);
+    const models = await fetchPpsData(typeSelect, 10, dateFrom, dateTo);
     res.json({ models: models, type: typeSelect });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -103,8 +121,10 @@ exports.getSinglePage = (req, res) => {
 
 exports.getSingleData = async (req, res) => {
   const typeSelect = req.query.type || "LL";
+  const dateFrom = req.query.dateFrom;
+  const dateTo = req.query.dateTo;
   try {
-    const models = await fetchPpsData(typeSelect, 100);
+    const models = await fetchPpsData(typeSelect, 100, dateFrom, dateTo);
     res.json({ models: models, type: typeSelect });
   } catch (error) {
     res.status(500).json({ error: error.message });
