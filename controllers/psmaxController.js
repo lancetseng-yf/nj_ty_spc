@@ -1,6 +1,6 @@
 const DiecastingEigenvalueData = require("../models/diecasting_eigenvalue_data");
 const modelJson = require("../models/psmax_model.json");
-const { Op } = require("sequelize");
+const { Op, literal  } = require("sequelize");
 
 // --- Utility Functions & Code Mapping ---
 const CODE_MAP = {
@@ -49,21 +49,35 @@ function mapDbItemToModel(item, rawModel) {
 }
 
 // --- Data Fetching Logic ---
-async function fetchPsmaxData(type, limit) {
+async function fetchPsmaxData(type, dateFrom = null, dateTo = null) {
   const rawModel = modelJson || {};
   const lasercode = getLaserCode(type);
 
   try {
-    const dataFromDb = await DiecastingEigenvalueData.findAll({
-      where: {
-        speed: { [Op.ne]: null },
-        position: { [Op.ne]: null },
-        casting_pressure: { [Op.ne]: null },
-        lasercode: { [Op.like]: `%${lasercode}%` },
-      },
-      limit: limit,
+    const whereClause = {
+      speed: { [Op.ne]: null },
+      position: { [Op.ne]: null },
+      casting_pressure: { [Op.ne]: null },
+      lasercode: { [Op.like]: `%${lasercode}%` },
+    };
+
+    if (dateFrom && dateTo) {
+      whereClause.dt = {
+       [Op.between]: [literal(`'${dateFrom}'`), literal(`'${dateTo}'`)]
+      };
+    }
+
+    const queryOptions = {
+      where: whereClause,
       order: [["dt", "DESC"]],
-    });
+    };
+
+    // Apply limit only if date range is not provided
+    if (!dateFrom || !dateTo) {
+      queryOptions.limit = 500;
+    }
+
+    const dataFromDb = await DiecastingEigenvalueData.findAll(queryOptions);
 
     return dataFromDb.map((item) => mapDbItemToModel(item, rawModel));
   } catch (err) {
@@ -80,8 +94,10 @@ exports.getPsmaxPage = (req, res) => {
 
 exports.getPsmaxData = async (req, res) => {
   const typeSelect = req.query.type || "LL";
+  const dateFrom = req.query.dateFrom;
+  const dateTo = req.query.dateTo;
   try {
-    const models = await fetchPsmaxData(typeSelect, 1000);
+    const models = await fetchPsmaxData(typeSelect, dateFrom, dateTo);
     res.json({ models: models, type: typeSelect });
   } catch (err) {
     res.status(500).json({ error: err.message });

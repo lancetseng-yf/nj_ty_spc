@@ -50,6 +50,9 @@ document.addEventListener("DOMContentLoaded", () => {
     timeLeft = refreshTime;
     fetchData(currentType);
     startCountdown();
+
+    document.getElementById("datetimeFrom").value = "";
+    document.getElementById("datetimeTo").value = "";
   });
 
   // --- Fetch data + render ---
@@ -97,9 +100,23 @@ document.addEventListener("DOMContentLoaded", () => {
       rangeLabel = document.getElementById("rangeLabel");
     }
 
-    // Setup slider
-    if (slider) slider.noUiSlider.destroy();
+    // ✅ Handle no data case
+    if (!scatterData.length) {
+      chart.clear();
+      statsTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#888;">No data available</td></tr>`;
+      if (slider && slider.noUiSlider) {
+        slider.noUiSlider.destroy();
+      }
+      rangeLabel.textContent = "Time: N/A";
+      return;
+    }
+
+    // --- Setup slider ---
+    if (slider && slider.noUiSlider) {
+      slider.noUiSlider.destroy();
+    }
     slider = document.getElementById("timeSlider");
+
     const times = scatterData.map((d) => d[0]);
     const minTime = Math.min(...times);
     const maxTime = Math.max(...times);
@@ -119,6 +136,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     refreshChart();
+
+    // ✅ Ensure chart resizes properly
+    requestAnimationFrame(() => chart.resize());
     window.addEventListener("resize", () => chart.resize());
   }
 
@@ -314,5 +334,45 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 1000);
   }
 
-  // --- Start countdown ---
+  // --- Manual Date Range Submission ---
+  const submitBtn = document.getElementById("submitBtn");
+  if (submitBtn) {
+    submitBtn.addEventListener("click", (e) => {
+      e.preventDefault(); // prevent form reload
+
+      let dateFrom = document.getElementById("datetimeFrom").value;
+      let dateTo = document.getElementById("datetimeTo").value;
+
+      // Stop countdown (manual filtering should not auto-refresh)
+      clearInterval(countdownInterval);
+      autoRefresh = false;
+      refreshIcon.innerText = "play_arrow";
+
+      // Fetch with date range
+      loadData(currentType, dateFrom, dateTo);
+    });
+  }
+
+  // --- New loadData (manual fetch by date range) ---
+  function loadData(type, dateFrom, dateTo) {
+    document.getElementById("loading-spinner").style.display = "block";
+    document.getElementById("main-content").style.display = "none";
+
+    let url = `/psmax/data?type=${type}`;
+    if (dateFrom && dateTo) {
+      url += `&dateFrom=${dateFrom}&dateTo=${dateTo}`;
+    }
+    fetch(url)
+      .then((res) => res.json())
+      .then(({ models }) => {
+        document.getElementById("loading-spinner").style.display = "none";
+        document.getElementById("main-content").style.display = "block";
+        renderMain(models, type);
+      })
+      .catch((err) => {
+        console.error(err);
+        document.getElementById("loading-spinner").innerHTML =
+          "Failed to load data!";
+      });
+  }
 });

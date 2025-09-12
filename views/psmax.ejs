@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
-  <h1>Max Pressure vs Max Speed (Latest 1000 Shots)</h1>
+  <h1>Max Pressure vs Max Speed (Latest 500 Shots)</h1>
 
   <!-- Loading Spinner -->
   <%- include("partials/loading") %>
@@ -32,6 +32,10 @@
         <span class="material-icons" id="refreshIcon">pause</span>
       </button>
     </div>
+
+      <div class="controls">
+        <%- include("partials/_datetimepicker") %>
+      </div>
 
     <div id="chart"></div>
     <div id="rangeLabel"></div>
