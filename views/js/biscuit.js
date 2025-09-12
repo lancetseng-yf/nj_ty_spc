@@ -278,6 +278,10 @@ const initializeEventListeners = () => {
     currentType = e.target.value;
     loadData(currentType);
     refreshManager.resetCountdown(currentType);
+
+    // also clear input values if not using flatpickr
+    document.getElementById("datetimeFrom").value = "";
+    document.getElementById("datetimeTo").value = "";
   });
 
   window.addEventListener("resize", () => chart.resize());
@@ -287,8 +291,9 @@ const initializeEventListeners = () => {
     submitBtn.addEventListener("click", (e) => {
       e.preventDefault(); // prevent page reload
 
-      const dateFrom = document.getElementById("datetimeFrom").value + ":00";
-      const dateTo = document.getElementById("datetimeTo").value + ":59";
+      const dateFrom = document.getElementById("datetimeFrom").value;
+      const dateTo = document.getElementById("datetimeTo").value;
+
       loadData(currentType, dateFrom, dateTo);
       refreshManager.pauseRefresh(); // Always pause the timer after manual submission
     });
