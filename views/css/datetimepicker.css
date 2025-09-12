@@ -1,14 +1,19 @@
 .datetime-range-picker .d-flex {
-  display: flex;
+display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap; /* wraps on small screens */
+  gap: 12px;
+  background: #ffffff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  font-size: 18px;
+  margin: 0 auto 20px auto;
+  width: fit-content;
 }
 
 .datetime-range-picker label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #444;
+  font-size: 18px;
+  font-weight: 500;
 }
 
 .datetime-range-picker input[type="text"].form-control,
