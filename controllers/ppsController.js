@@ -45,6 +45,24 @@ function mapDbItemToModel(item, rawModel) {
     ? item.position
     : convertStringToArray(item.position);
   const typeLabel = labelType(item.lasercode);
+  const rawControl = Array.isArray(item.control)
+    ? item.control
+    : convertStringToArray(item.control);
+  const rawFeedback = Array.isArray(item.feedback)
+    ? item.feedback
+    : convertStringToArray(item.feedback);
+  const rawStoragePressureN2 = Array.isArray(item.storage_pressure_n2)
+    ? item.storage_pressure_n2
+    : convertStringToArray(item.storage_pressure_n2);
+  const rawPressurizationPressureN2 = Array.isArray(
+    item.pressurization_pressure_n2
+  )
+    ? item.pressurization_pressure_n2
+    : convertStringToArray(item.pressurization_pressure_n2);
+  const rawSystemPressure = Array.isArray(item.system_pressure)
+    ? item.system_pressure
+    : convertStringToArray(item.system_pressure);
+
   return {
     ...rawModel,
     diecasting_eigenvalue_data_id: item.diecasting_eigenvalue_data_id,
@@ -54,6 +72,22 @@ function mapDbItemToModel(item, rawModel) {
     sm: item.sm ?? 0,
     dt: item.dt || rawModel.dt,
     type: typeLabel,
+
+    // ✅ new fields from your JSON model
+    control: normalizeArray(rawControl, 1),
+    feedback: normalizeArray(rawFeedback, 1),
+    storage_pressure_n2: normalizeArray(rawStoragePressureN2, 1),
+    pressurization_pressure_n2: normalizeArray(rawPressurizationPressureN2, 1),
+    system_pressure: normalizeArray(rawSystemPressure, 1),
+    vacuum_pressure1: item.vacuum_pressure1 ?? 0,
+    vacuum_pressure2: item.vacuum_pressure2 ?? 0,
+    vacuum_pressure3: item.vacuum_pressure3 ?? 0,
+    vacuum_pressure4: item.vacuum_pressure4 ?? 0,
+    vacuum_pressure5: item.vacuum_pressure5 ?? 0,
+    vacuum_pressure6: item.vacuum_pressure6 ?? 0,
+    vacuum_pressure7: item.vacuum_pressure7 ?? 0,
+    vacuum_pressure8: item.vacuum_pressure8 ?? 0,
+    lv: item.lv ?? 0,
   };
 }
 

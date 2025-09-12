@@ -38,7 +38,16 @@ document.addEventListener("DOMContentLoaded", () => {
         textStyle: { fontSize: 24 },
       },
       legend: {
-        data: ["Pressure", "Position", "Speed"],
+        data: [
+          "Pressure",
+          "Position",
+          "Speed",
+          "伺服阀控制曲线",
+          "伺服阀芯反馈曲线",
+          "儲能n2壓力曲線",
+          "增壓n2壓力曲線",
+          "系統壓力曲線",
+        ],
         textStyle: { fontSize: 20 },
         top: "auto",
         bottom: 20,
@@ -47,7 +56,8 @@ document.addEventListener("DOMContentLoaded", () => {
         trigger: "axis",
         formatter: function (params) {
           let idx = params[0].dataIndex + 1;
-          let tooltipText = `Index: ${idx}<br/>Biscuit: ${model.sm}<br/>`;
+          let tooltipText = `Index: ${idx}<br/>
+                             Biscuit: ${model.sm}<br/>`;
           params.forEach((p) => {
             let displayValue =
               p.seriesName === "Pressure" || p.seriesName === "Speed"
@@ -55,6 +65,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 : p.data;
             tooltipText += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color}"></span>${p.seriesName}: ${displayValue}<br/>`;
           });
+
+          // tooltipText +=  `伺服阀控制曲线: ${model.control}<br/>`;
+          // tooltipText +=  `伺服阀芯反馈曲线: ${model.feedback}<br/>`;
+          // tooltipText +=  `儲能n2壓力曲線: ${model.storage_pressure_n2}<br/>`;
+          // tooltipText +=  `增壓n2壓力曲線: ${model.pressurization_pressure_n2}<br/>`;
+          // tooltipText +=  `系統壓力曲線: ${model.system_pressure}<br/>`;
+          tooltipText += `真空度1: ${model.vacuum_pressure1}<br/>`;
+          tooltipText += `真空度2: ${model.vacuum_pressure2}<br/>`;
+          tooltipText += `真空度3: ${model.vacuum_pressure3}<br/>`;
+          tooltipText += `真空度4: ${model.vacuum_pressure4}<br/>`;
+          tooltipText += `真空度5: ${model.vacuum_pressure5}<br/>`;
+          tooltipText += `真空度6: ${model.vacuum_pressure6}<br/>`;
+          tooltipText += `真空度7: ${model.vacuum_pressure7}<br/>`;
+          tooltipText += `真空度8: ${model.vacuum_pressure8}<br/>`;
+          tooltipText += `機邊爐鋁湯溫度: ${model.lv}<br/>`;
+
           return tooltipText;
         },
       },
@@ -95,6 +121,32 @@ document.addEventListener("DOMContentLoaded", () => {
           name: "Speed",
           type: "line",
           data: (model.speed || []).map((v) => v * 15),
+        },
+        {
+          name: "伺服阀控制曲线",
+          type: "line",
+          data: (model.control || []).map((v) => v * 1) || [],
+        },
+        {
+          name: "伺服阀芯反馈曲线",
+          type: "line",
+          data: (model.feedback || []).map((v) => v * 1) || [],
+        },
+        {
+          name: "儲能n2壓力曲線",
+          type: "line",
+          data: (model.storage_pressure_n2 || []).map((v) => v * 1) || [],
+        },
+        {
+          name: "增壓n2壓力曲線",
+          type: "line",
+          data:
+            (model.pressurization_pressure_n2 || []).map((v) => v * 1) || [],
+        },
+        {
+          name: "系統壓力曲線",
+          type: "line",
+          data: (model.system_pressure || []).map((v) => v * 1) || [],
         },
       ],
     };
