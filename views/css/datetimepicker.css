@@ -1,0 +1,50 @@
+.datetime-range-picker .d-flex {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap; /* wraps on small screens */
+}
+
+.datetime-range-picker label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+.datetime-range-picker input[type="text"].form-control,
+.datetime-range-picker .flatpickr-input {
+  flex: 1; /* expand to fill space */
+  min-width: 180px; /* Adjusted min-width for better fit */
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease-in-out;
+}
+
+.datetime-range-picker input[type="text"].form-control:focus,
+.datetime-range-picker .flatpickr-input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.4);
+}
+
+.datetime-range-picker .btn-primary {
+ font-size: 18px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: #e5e7eb;
+  color: #111827;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.datetime-range-picker .btn-primary:hover {
+  background-color: #d1d5db; /* Darker blue on hover */
+}
+
+.datetime-range-picker .btn-primary:active {
+  transform: scale(0.97);
+}

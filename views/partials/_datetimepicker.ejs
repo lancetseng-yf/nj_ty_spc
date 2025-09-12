@@ -1,0 +1,46 @@
+<div class="datetime-range-picker">
+  <div class="d-flex align-items-center gap-2">
+    <label for="datetimeFrom">From:</label>
+    <input
+      type="text"
+      id="datetimeFrom"
+      class="form-control"
+      placeholder="From"
+    />
+    <label for="datetimeTo">To:</label>
+    <input
+      type="text"
+      id="datetimeTo"
+      class="form-control"
+      placeholder="To"
+    />
+    <button id="submitBtn" type="button" class="btn btn-primary">Process</button>
+  </div>
+</div>
+
+<!-- Flatpickr CSS & JS -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+/>
+<link
+  rel="stylesheet"
+  href="/css/datetimepicker.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    flatpickr("#datetimeFrom", {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      time_24hr: true
+    });
+
+    flatpickr("#datetimeTo", {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      time_24hr: true
+    });
+  });
+</script>
