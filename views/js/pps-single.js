@@ -27,134 +27,147 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- Build chart option ---
-function buildChartOption(model) {
-  if (!model) return { title: { text: "No Data", left: "center" } };
+  function buildChartOption(model) {
+    if (!model) return { title: { text: "No Data", left: "center" } };
 
-  const duration = 8; // seconds
+    const duration = 8; // seconds
 
-  // Sampling steps
-  const step500 = 1 / 500; // 500Hz series (Pressure, Position, Speed)
-  const step250 = 1 / 250; // 250Hz series (other series)
+    // Sampling steps
+    const step500 = 1 / 500; // 500Hz series (Pressure, Position, Speed)
+    const step250 = 1 / 250; // 250Hz series (other series)
 
-  // Prepare 500Hz series
-  const series500 = [
-    {
-      name: "Pressure",
-      type: "line",
-      data: (model.pressure || []).map((v, i) => [i * step500, v * 15]),
-    },
-    {
-      name: "Position",
-      type: "line",
-      data: (model.position || []).map((v, i) => [i * step500, v]),
-    },
-    {
-      name: "Speed",
-      type: "line",
-      data: (model.speed || []).map((v, i) => [i * step500, v * 15]),
-    },
-  ];
-
-  // Prepare 250Hz series
-  const series250 = [
-    {
-      name: "伺服阀控制曲线",
-      type: "line",
-      data: (model.control || []).map((v, i) => [i * step250, v]),
-    },
-    {
-      name: "伺服阀芯反馈曲线",
-      type: "line",
-      data: (model.feedback || []).map((v, i) => [i * step250, v]),
-    },
-    {
-      name: "儲能n2壓力曲線",
-      type: "line",
-      data: (model.storage_pressure_n2 || []).map((v, i) => [i * step250, v]),
-    },
-    {
-      name: "增壓n2壓力曲線",
-      type: "line",
-      data: (model.pressurization_pressure_n2 || []).map((v, i) => [i * step250, v]),
-    },
-    {
-      name: "系統壓力曲線",
-      type: "line",
-      data: (model.system_pressure || []).map((v, i) => [i * step250, v]),
-    },
-  ];
-
-  // Combine all series
-  const series = [...series500, ...series250];
-
-  return {
-    title: {
-      text: `${model.type || "N/A"} - ${model.dt}`,
-      left: "center",
-      top: 10,
-      textStyle: { fontSize: 24 },
-    },
-    legend: {
-      data: series.map((s) => s.name),
-      textStyle: { fontSize: 20 },
-      top: "auto",
-      bottom: 20,
-    },
-    tooltip: {
-      trigger: "axis",
-      formatter: function (params) {
-        let time = params[0].data[0]; // x-axis value = time in seconds
-        let tooltipText = `Time: ${time.toFixed(3)}s<br/>Biscuit: ${model.sm}<br/>`;
-        params.forEach((p) => {
-          let displayValue =
-            p.seriesName === "Pressure" || p.seriesName === "Speed"
-              ? p.data[1] / 15
-              : p.data[1];
-          tooltipText += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color}"></span>${p.seriesName}: ${displayValue}<br/>`;
-        });
-
-        // Add vacuum pressures
-        for (let i = 1; i <= 8; i++) {
-          tooltipText += `真空度${i}: ${model["vacuum_pressure" + i]}<br/>`;
-        }
-        tooltipText += `機邊爐鋁湯溫度: ${model.lv}<br/>`;
-
-        return tooltipText;
+    // Prepare 500Hz series
+    const series500 = [
+      {
+        name: "Pressure",
+        type: "line",
+        showSymbol: false, // no dots
+        data: (model.pressure || []).map((v, i) => [i * step500, v * 15]),
       },
-    },
-    toolbox: {
-      show: true,
-      feature: {
-        dataZoom: { yAxisIndex: "none" },
-        myrestore: {
-          show: true,
-          icon: `path://M512 0L1024 512 512 1024 0 512Z`,
-          title: "Reset Zoom",
-          onclick: function () {
-            chart.dispatchAction({ type: "dataZoom", start: 0, end: 100 });
+      {
+        name: "Position",
+        type: "line",
+        showSymbol: false,
+        data: (model.position || []).map((v, i) => [i * step500, v]),
+      },
+      {
+        name: "Speed",
+        type: "line",
+        showSymbol: false,
+        data: (model.speed || []).map((v, i) => [i * step500, v * 15]),
+      },
+    ];
+
+    // Prepare 250Hz series
+    const series250 = [
+      {
+        name: "伺服阀控制曲线",
+        type: "line",
+        showSymbol: false,
+        data: (model.control || []).map((v, i) => [i * step250, v]),
+      },
+      {
+        name: "伺服阀芯反馈曲线",
+        type: "line",
+        showSymbol: false,
+        data: (model.feedback || []).map((v, i) => [i * step250, v]),
+      },
+      {
+        name: "儲能n2壓力曲線",
+        type: "line",
+        showSymbol: false,
+        data: (model.storage_pressure_n2 || []).map((v, i) => [i * step250, v]),
+      },
+      {
+        name: "增壓n2壓力曲線",
+        type: "line",
+        showSymbol: false,
+        data: (model.pressurization_pressure_n2 || []).map((v, i) => [
+          i * step250,
+          v,
+        ]),
+      },
+      {
+        name: "系統壓力曲線",
+        type: "line",
+        showSymbol: false,
+        data: (model.system_pressure || []).map((v, i) => [i * step250, v]),
+      },
+    ];
+
+    // Combine all series
+    const series = [...series500, ...series250];
+
+    return {
+      title: {
+        text: `${model.type || "N/A"} - ${model.dt}`,
+        left: "center",
+        top: 10,
+        textStyle: { fontSize: 24 },
+      },
+      legend: {
+        data: series.map((s) => s.name),
+        textStyle: { fontSize: 20 },
+        top: "auto",
+        bottom: 20,
+      },
+      tooltip: {
+        trigger: "axis",
+        formatter: function (params) {
+          let time = params[0].data[0]; // x-axis value = time in seconds
+          let tooltipText = `Time: ${time.toFixed(3)}s<br/>Biscuit: ${
+            model.sm
+          }<br/>`;
+          params.forEach((p) => {
+            let displayValue =
+              p.seriesName === "Pressure" || p.seriesName === "Speed"
+                ? p.data[1] / 15
+                : p.data[1];
+            tooltipText += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color}"></span>${p.seriesName}: ${displayValue}<br/>`;
+          });
+
+          // Add vacuum pressures
+          for (let i = 1; i <= 8; i++) {
+            tooltipText += `真空度${i}: ${model["vacuum_pressure" + i]}<br/>`;
+          }
+          tooltipText += `機邊爐鋁湯溫度: ${model.lv}<br/>`;
+
+          return tooltipText;
+        },
+      },
+      toolbox: {
+        show: true,
+        feature: {
+          dataZoom: { yAxisIndex: "none" },
+          myrestore: {
+            show: true,
+            icon: `path://M512 0L1024 512 512 1024 0 512Z`,
+            title: "Reset Zoom",
+            onclick: function () {
+              chart.dispatchAction({ type: "dataZoom", start: 0, end: 100 });
+            },
           },
         },
       },
-    },
-    dataZoom: [{ type: "inside", start: 0, end: 100 }],
-    grid: { top: 80, bottom: 100, left: 80, right: 20 },
-    xAxis: {
-      type: "value",
-      min: 0,
-      max: duration,
-      interval: 1,
-      axisLabel: {
-        fontSize: 20,
-        formatter: "{value}s",
+      dataZoom: [{ type: "inside", start: 0, end: 100 }],
+      grid: { top: 80, bottom: 100, left: 80, right: 20 },
+      xAxis: {
+        type: "value",
+        min: 0,
+        max: duration,
+        interval: 1,
+        axisLabel: {
+          fontSize: 20,
+          formatter: "{value}s",
+        },
+        name: "Time(s)",
+        nameGap: 50,
+        nameTextStyle: { fontSize: 20, fontWeight: "bold" },
       },
-      name: "Time(s)",
-      nameGap: 50,
-      nameTextStyle: { fontSize: 20, fontWeight: "bold" },
-    },
-    yAxis: { type: "value", axisLabel: { fontSize: 20 }, min: 0 },
-    series: series,
-  };
-}
+      yAxis: { type: "value", axisLabel: { fontSize: 20 }, min: 0 },
+      series: series,
+    };
+  }
 
   // --- Render chart ---
   function renderChart() {
