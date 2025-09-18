@@ -141,7 +141,7 @@ exports.getBatchData = async (req, res) => {
   const dateFrom = req.query.dateFrom;
   const dateTo = req.query.dateTo;
   try {
-    const models = await fetchPpsData(typeSelect, 10, dateFrom, dateTo);
+    const models = await fetchPpsData(typeSelect, 3, dateFrom, dateTo);
     res.json({ models: models, type: typeSelect });
   } catch (error) {
     res.status(500).json({ error: error.message });

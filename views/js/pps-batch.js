@@ -25,11 +25,18 @@ function fmtDateYMDHMS(d) {
 
 function buildTimeValuePairs(arr, dt, id) {
   const start = new Date(dt).getTime();
-  const step = 1000 / 50; // 50Hz
-  return arr.map((v, i) => ({
+  const duration = 8000; // 8s per id
+  const step = duration / arr.length; // ms per sample
+
+  const points = arr.map((v, i) => ({
     value: [new Date(start + i * step), v],
     diecastingId: id,
   }));
+
+  // 👇 Insert separator so different IDs don't connect
+  points.push({ value: [null, null] });
+
+  return points;
 }
 
 // --- Chart builder ---
@@ -45,22 +52,21 @@ function buildChartOption(models) {
           m.position,
           m.dt,
           m.diecasting_eigenvalue_data_id
-        ),
-        { value: [null, null] }
+        )
       );
+
     if (Array.isArray(m.pressure))
       pressData.push(
         ...buildTimeValuePairs(
           m.pressure,
           m.dt,
           m.diecasting_eigenvalue_data_id
-        ),
-        { value: [null, null] }
+        )
       );
+
     if (Array.isArray(m.speed))
       speedData.push(
-        ...buildTimeValuePairs(m.speed, m.dt, m.diecasting_eigenvalue_data_id),
-        { value: [null, null] }
+        ...buildTimeValuePairs(m.speed, m.dt, m.diecasting_eigenvalue_data_id)
       );
   });
 
@@ -70,6 +76,7 @@ function buildChartOption(models) {
       trigger: "axis",
       axisPointer: { type: "cross" },
       formatter: (params) => {
+        if (!params.length) return "";
         const time = params[0]?.value?.[0]
           ? fmtDateYMDHMS(new Date(params[0].value[0]))
           : "";
@@ -85,7 +92,7 @@ function buildChartOption(models) {
             .map(
               (p) =>
                 `${p.marker} ${p.seriesName}: ${
-                  p.seriesName === "Pressure" || p.seriesName === "Speed"
+                  ["Pressure", "Speed"].includes(p.seriesName)
                     ? p.data.original ?? p.value[1]
                     : p.value[1]
                 }`
@@ -115,7 +122,7 @@ function buildChartOption(models) {
     },
     xAxis: {
       type: "time",
-      name: "Time(s)",
+      name: "Time",
       nameTextStyle: { fontSize: 20, fontWeight: "bold" },
       splitLine: { show: true },
       axisLabel: { fontSize: 20, rotate: 30 },
@@ -140,29 +147,41 @@ function buildChartOption(models) {
         type: "line",
         smooth: true,
         showSymbol: false,
-        data: posData,
+        connectNulls: false,
+        data: posData, // already has null separator inside
       },
       {
         name: "Pressure",
         type: "line",
         smooth: true,
         showSymbol: false,
-        data: pressData.map((p) => ({
-          value: [p.value[0], p.value[1] * 15],
-          original: p.value[1],
-          diecastingId: p.diecastingId,
-        })),
+        connectNulls: false,
+        data: pressData.map(
+          (p) =>
+            p.value && p.value[0] !== null
+              ? {
+                  value: [p.value[0], p.value[1] * 15],
+                  original: p.value[1],
+                  diecastingId: p.diecastingId,
+                }
+              : { value: [null, null] } // preserve null gap
+        ),
       },
       {
         name: "Speed",
         type: "line",
         smooth: true,
         showSymbol: false,
-        data: speedData.map((p) => ({
-          value: [p.value[0], p.value[1] * 15],
-          original: p.value[1],
-          diecastingId: p.diecastingId,
-        })),
+        connectNulls: false,
+        data: speedData.map((p) =>
+          p.value && p.value[0] !== null
+            ? {
+                value: [p.value[0], p.value[1] * 15],
+                original: p.value[1],
+                diecastingId: p.diecastingId,
+              }
+            : { value: [null, null] }
+        ),
       },
     ],
   };
@@ -234,17 +253,14 @@ productSelect.addEventListener("change", (e) => {
 // --- Manual date filter submit ---
 if (submitBtn) {
   submitBtn.addEventListener("click", (e) => {
-    e.preventDefault(); // prevent page reload
+    e.preventDefault();
+    const dateFrom = dateFromEl.value;
+    const dateTo = dateToEl.value;
 
-    const dateFrom = document.getElementById("datetimeFrom").value;
-    const dateTo = document.getElementById("datetimeTo").value;
-
-    // Stop auto-refresh
     autoRefresh = false;
     refreshIcon.innerText = "play_arrow";
     clearInterval(countdownInterval);
 
-    // Load data with date range
     loadData(productSelect.value, dateFrom, dateTo);
   });
 }
