@@ -18,17 +18,9 @@
 
       <!-- Dropdown -->
       <div id="controls">
-        <label for="productSelect">Select Product:</label>
-        <select id="productSelect">
-          <% ["LL","LR","ML","MR","ZP"].forEach(p => { %>
-            <option value="<%= p %>" <%= p === type ? "selected" : "" %>><%= p %></option>
-          <% }) %>
-        </select>
+         <%- include("partials/_product-dropbox") %>
 
-        <span id="countdown">Refreshing in: -s</span>
-        <button id="refreshControl" title="Pause/Start">
-          <span class="material-icons" id="refreshIcon">pause</span>
-        </button>
+       <%- include("partials/_countdown-control") %>
       </div>
 
       <div>
