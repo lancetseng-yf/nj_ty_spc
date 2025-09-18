@@ -43,7 +43,7 @@ function mapDbItemToModel(item, rawModel) {
     diecasting_eigenvalue_data_id: item.diecasting_eigenvalue_data_id,
     max_pressure: safeMax(castingPressureArray),
     max_speed: safeMax(speedArray),
-    dt: item.dt || rawModel.dt,
+    dt: item.create_time,
     type: labelType(item.lasercode),
   };
 }
@@ -69,7 +69,7 @@ async function fetchPsmaxData(type, dateFrom = null, dateTo = null) {
 
     const queryOptions = {
       where: whereClause,
-      order: [["dt", "DESC"]],
+      order: [["create_time", "DESC"]],
     };
 
     // Apply limit only if date range is not provided

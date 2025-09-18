@@ -70,7 +70,7 @@ function mapDbItemToModel(item, rawModel) {
     position: rawPosition,
     speed: normalizeArray(rawSpeed, 1),
     sm: item.sm ?? 0,
-    dt: item.dt || rawModel.dt,
+    dt: item.create_time,
     type: typeLabel,
 
     // ✅ new fields from your JSON model
@@ -113,7 +113,7 @@ async function fetchPpsData(type, limit, dateFrom = null, dateTo = null) {
 
     const queryOptions = {
       where: whereCondition,
-      order: [["dt", "DESC"]],
+      order: [["create_time", "DESC"]],
     };
 
     // ✅ Only apply limit when no date range

@@ -31,7 +31,7 @@ function mapDbItemToModel(item, rawModel) {
     ...rawModel,
     diecasting_eigenvalue_data_id: item.diecasting_eigenvalue_data_id,
     sm: item.sm ?? 0,
-    dt: item.dt || rawModel.dt,
+    dt: item.create_time,
     type: labelType(item.lasercode || ""),
   };
 }
@@ -42,8 +42,6 @@ exports.getBiscuitData = async (req, res) => {
   const dateTo = req.query.dateTo;
   const lasercode = getLaserCode(typeSelect);
   const rawModel = modelJson || {};
-
-  console.log(`Fr:${dateFrom} To:${dateTo}`);
 
   try {
     const whereClause = {
@@ -56,14 +54,14 @@ exports.getBiscuitData = async (req, res) => {
     if (dateFrom && dateTo) {
       // 使用 date-fns.parse 精確解析日期字串
        
-      whereClause.dt = {
+      whereClause.create_time = {
       [Op.between]: [literal(`'${dateFrom}'`), literal(`'${dateTo}'`)]
       };
     }
 
     const queryOptions = {
       where: whereClause,
-      order: [["dt", "DESC"]],
+      order: [["create_time", "DESC"]],
     };
 
     // Apply limit only if date range is not provided
