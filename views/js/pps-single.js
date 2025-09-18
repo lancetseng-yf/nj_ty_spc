@@ -28,6 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Build chart option ---
   function buildChartOption(model) {
+    const sampleRate = 500; // Hz
+    const duration = 8; // seconds
+    const timeStep = 1 / sampleRate; // 0.02s
+
     if (!model) return { title: { text: "No Data", left: "center" } };
 
     return {
@@ -66,11 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
             tooltipText += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color}"></span>${p.seriesName}: ${displayValue}<br/>`;
           });
 
-          // tooltipText +=  `伺服阀控制曲线: ${model.control}<br/>`;
-          // tooltipText +=  `伺服阀芯反馈曲线: ${model.feedback}<br/>`;
-          // tooltipText +=  `儲能n2壓力曲線: ${model.storage_pressure_n2}<br/>`;
-          // tooltipText +=  `增壓n2壓力曲線: ${model.pressurization_pressure_n2}<br/>`;
-          // tooltipText +=  `系統壓力曲線: ${model.system_pressure}<br/>`;
           tooltipText += `真空度1: ${model.vacuum_pressure1}<br/>`;
           tooltipText += `真空度2: ${model.vacuum_pressure2}<br/>`;
           tooltipText += `真空度3: ${model.vacuum_pressure3}<br/>`;
@@ -103,8 +102,20 @@ document.addEventListener("DOMContentLoaded", () => {
       xAxis: {
         type: "category",
         boundaryGap: false,
-        data: model.position.map((_, i) => i + 1),
-        axisLabel: { fontSize: 20, rotate: 30, interval: "auto" },
+        data: Array.from(
+          { length: model.position.length },
+          (_, i) => (i * timeStep).toFixed(3) // 0.000, 0.002, ...
+        ),
+        axisLabel: {
+          fontSize: 20,
+          rotate: 0,
+          interval: sampleRate, // one label per second (500 samples)
+          formatter: function (_, index) {
+            const t = index * timeStep;
+            const rounded = Math.round(t); // fix float error
+            return Math.abs(t - rounded) < 1e-6 ? rounded + "s" : "";
+          },
+        },
         name: "Time(s)",
         nameGap: 50,
         nameTextStyle: { fontSize: 20, fontWeight: "bold" },
