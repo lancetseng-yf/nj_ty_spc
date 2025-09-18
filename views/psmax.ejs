@@ -33,17 +33,7 @@
       <div id="controls">
         <%- include("partials/_product-dropbox") %>
         <%-include("partials/_countdown-control") %>
-        <div class="form-check">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="hideControllers"
-            name="hideControllers"
-            checked
-          />
-          <label class="form-check-label" for="hideControllers"
-            >Hide Controllers</label
-          >
+         <%-include("partials/_hide-manual-control") %>
         </div>
       </div>
 
@@ -56,7 +46,7 @@
                 <th></th>
                 <th>LCL</th>
                 <th>UCL</th>
-                <th>TOL</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>

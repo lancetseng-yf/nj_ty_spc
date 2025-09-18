@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const initialType = "<%= type %>";
   const productSelect = document.getElementById("productSelect");
-  const hideControllerCheckbox = document.getElementById("hideControllers");
 
   const loadingEl = document.getElementById("loading-spinner");
   const mainContent = document.getElementById("main-content");
@@ -355,21 +354,6 @@ document.addEventListener("DOMContentLoaded", () => {
     refreshChart();
   });
 
-  hideControllerCheckbox?.addEventListener("change", () => {
-    const collapseEl = document.getElementById("manual-control");
-    if (!collapseEl) return;
-
-    let collapseInstance = bootstrap.Collapse.getInstance(collapseEl);
-    if (!collapseInstance) {
-      collapseInstance = new bootstrap.Collapse(collapseEl, { toggle: false });
-    }
-
-    if (hideControllerCheckbox.checked) {
-      collapseInstance.hide();
-    } else {
-      collapseInstance.show();
-    }
-  });
   // --- Initial load ---
   fetchData(initialType);
 });
