@@ -149,12 +149,12 @@ exports.getBatchData = async (req, res) => {
 };
 
 exports.getSinglePage = (req, res) => {
-  const typeSelect = req.query.type || "LL";
+  const typeSelect = req.query.type || "";
   res.render("pps-single", { type: typeSelect });
 };
 
 exports.getSingleData = async (req, res) => {
-  const typeSelect = req.query.type || "LL";
+  const typeSelect = req.query.type || "";
   const dateFrom = req.query.dateFrom;
   const dateTo = req.query.dateTo;
   try {

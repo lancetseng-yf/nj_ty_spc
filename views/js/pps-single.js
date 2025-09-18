@@ -1,47 +1,77 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // =========================
+  // 🔹 DOM Elements
+  // =========================
   const chart = echarts.init(document.getElementById("chart"));
-  let models = [];
-  let currentIndex = 0;
-  let currentType = document.getElementById("productSelect").value;
+  const autoCarouselCheckbox = document.getElementById("autoCarouselCheckbox");
+  const collapseEl = document.getElementById("datapicker-control");
+  const collapseInstance = new bootstrap.Collapse(collapseEl, {
+    toggle: false,
+  });
 
-  // --- Auto-refresh ---
-  let refreshTime = 105; // seconds
-  let timeLeft = refreshTime;
+  const productSelect = document.getElementById("productSelect");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const refreshBtn = document.getElementById("refreshControl");
+  const refreshIcon = document.getElementById("refreshIcon");
+  const loadingSpinner = document.getElementById("loading-spinner");
+  const countdownEl = document.getElementById("countdown");
+
+  // =========================
+  // 🔹 State
+  // =========================
+  const REFRESH_TIME = 105; // seconds
+  let timeLeft = REFRESH_TIME;
   let autoRefresh = true;
   let countdownInterval;
 
+  let models = [];
+  let currentIndex = 0;
+  let currentType = productSelect.value || null;
+
+  // =========================
+  // 🔹 Utilities
+  // =========================
   function startCountdown() {
     clearInterval(countdownInterval);
     if (!autoRefresh) return;
 
     countdownInterval = setInterval(() => {
-      document.getElementById(
-        "countdown"
-      ).innerText = `Refreshing in: ${timeLeft}s`;
+      countdownEl.innerText = `Refreshing in: ${timeLeft}s`;
       timeLeft--;
+
       if (timeLeft < 0) {
         fetchData(currentType);
-        timeLeft = refreshTime;
+        timeLeft = REFRESH_TIME;
       }
     }, 1000);
   }
 
-  // --- Build chart option ---
+  function updateAutoCarouselState() {
+    if (currentType) {
+      autoCarouselCheckbox.checked = false; // manual mode
+      collapseInstance.show(); // show picker
+    } else {
+      autoCarouselCheckbox.checked = true; // auto mode
+      collapseInstance.hide(); // hide picker
+    }
+  }
+
+  // =========================
+  // 🔹 Chart Functions
+  // =========================
   function buildChartOption(model) {
     if (!model) return { title: { text: "No Data", left: "center" } };
 
-    const duration = 8; // seconds
+    const duration = 8;
+    const step500 = 1 / 500;
+    const step250 = 1 / 250;
 
-    // Sampling steps
-    const step500 = 1 / 500; // 500Hz series (Pressure, Position, Speed)
-    const step250 = 1 / 250; // 250Hz series (other series)
-
-    // Prepare 500Hz series
     const series500 = [
       {
         name: "Pressure",
         type: "line",
-        showSymbol: false, // no dots
+        showSymbol: false,
         data: (model.pressure || []).map((v, i) => [i * step500, v * 15]),
       },
       {
@@ -58,7 +88,6 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     ];
 
-    // Prepare 250Hz series
     const series250 = [
       {
         name: "伺服阀控制曲线",
@@ -95,9 +124,6 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     ];
 
-    // Combine all series
-    const series = [...series500, ...series250];
-
     return {
       title: {
         text: `${model.type || "N/A"} - ${model.dt}`,
@@ -106,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
         textStyle: { fontSize: 24 },
       },
       legend: {
-        data: series.map((s) => s.name),
+        data: [...series500, ...series250].map((s) => s.name),
         textStyle: { fontSize: 20 },
         top: "auto",
         bottom: 20,
@@ -114,24 +140,22 @@ document.addEventListener("DOMContentLoaded", () => {
       tooltip: {
         trigger: "axis",
         formatter: function (params) {
-          let time = params[0].data[0]; // x-axis value = time in seconds
+          let time = params[0].data[0];
           let tooltipText = `Time: ${time.toFixed(3)}s<br/>Biscuit: ${
             model.sm
           }<br/>`;
+
           params.forEach((p) => {
-            let displayValue =
-              p.seriesName === "Pressure" || p.seriesName === "Speed"
-                ? p.data[1] / 15
-                : p.data[1];
+            let displayValue = ["Pressure", "Speed"].includes(p.seriesName)
+              ? p.data[1] / 15
+              : p.data[1];
             tooltipText += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color}"></span>${p.seriesName}: ${displayValue}<br/>`;
           });
 
-          // Add vacuum pressures
           for (let i = 1; i <= 8; i++) {
             tooltipText += `真空度${i}: ${model["vacuum_pressure" + i]}<br/>`;
           }
           tooltipText += `機邊爐鋁湯溫度: ${model.lv}<br/>`;
-
           return tooltipText;
         },
       },
@@ -141,11 +165,10 @@ document.addEventListener("DOMContentLoaded", () => {
           dataZoom: { yAxisIndex: "none" },
           myrestore: {
             show: true,
-            icon: `path://M512 0L1024 512 512 1024 0 512Z`,
+            icon: "path://M512 0L1024 512 512 1024 0 512Z",
             title: "Reset Zoom",
-            onclick: function () {
-              chart.dispatchAction({ type: "dataZoom", start: 0, end: 100 });
-            },
+            onclick: () =>
+              chart.dispatchAction({ type: "dataZoom", start: 0, end: 100 }),
           },
         },
       },
@@ -156,40 +179,36 @@ document.addEventListener("DOMContentLoaded", () => {
         min: 0,
         max: duration,
         interval: 1,
-        axisLabel: {
-          fontSize: 20,
-          formatter: "{value}s",
-        },
+        axisLabel: { fontSize: 20, formatter: "{value}s" },
         name: "Time(s)",
         nameGap: 50,
         nameTextStyle: { fontSize: 20, fontWeight: "bold" },
       },
       yAxis: { type: "value", axisLabel: { fontSize: 20 }, min: 0 },
-      series: series,
+      series: [...series500, ...series250],
     };
   }
 
-  // --- Render chart ---
   function renderChart() {
-    if (models.length === 0) {
+    if (!models.length) {
       chart.clear();
       chart.setOption({ title: { text: "No Data" } });
       return;
     }
-
     if (currentIndex >= models.length) currentIndex = models.length - 1;
     if (currentIndex < 0) currentIndex = 0;
-
     chart.setOption(buildChartOption(models[currentIndex]));
   }
 
-  // --- Fetch data with optional date range ---
+  // =========================
+  // 🔹 Data Fetching
+  // =========================
   function fetchData(type, dateFrom, dateTo) {
     clearInterval(countdownInterval);
-    document.getElementById("loading-spinner").style.display = "block";
+    loadingSpinner.style.display = "block";
     chart.clear();
 
-    let url = `/pps/single/data?type=${type}`;
+    let url = `/pps/single/data?&type=${type}`;
     if (dateFrom && dateTo) {
       url += `&dateFrom=${encodeURIComponent(
         dateFrom
@@ -207,67 +226,61 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error(err);
         chart.clear();
         chart.setOption({ title: { text: "Error Loading Data" } });
-        document.getElementById("loading-spinner").innerHTML =
-          "⚠ Failed to load data!";
+        loadingSpinner.innerHTML = "⚠ Failed to load data!";
       })
       .finally(() => {
-        document.getElementById("loading-spinner").style.display = "none";
-        timeLeft = refreshTime;
+        loadingSpinner.style.display = "none";
+        timeLeft = REFRESH_TIME;
         if (autoRefresh) startCountdown();
       });
   }
 
-  // --- Product dropdown change ---
-  document.getElementById("productSelect").addEventListener("change", () => {
-    currentType = document.getElementById("productSelect").value;
-    timeLeft = refreshTime;
+  // =========================
+  // 🔹 Event Bindings
+  // =========================
+  productSelect.addEventListener("change", () => {
+    currentType = productSelect.value;
+    timeLeft = REFRESH_TIME;
     fetchData(currentType);
-
-    document.getElementById("datetimeFrom").value = "";
-    document.getElementById("datetimeTo").value = "";
+    updateAutoCarouselState();
   });
 
-  // --- Prev/Next navigation ---
-  document.getElementById("prevBtn").addEventListener("click", () => {
+  prevBtn.addEventListener("click", () => {
     currentIndex--;
     renderChart();
   });
-  document.getElementById("nextBtn").addEventListener("click", () => {
+
+  nextBtn.addEventListener("click", () => {
     currentIndex++;
     renderChart();
   });
 
-  // --- Manual date range submission ---
-  const submitBtn = document.getElementById("submitBtn");
-  if (submitBtn) {
-    submitBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      const dateFrom = document.getElementById("datetimeFrom").value;
-      const dateTo = document.getElementById("datetimeTo").value;
-      fetchData(currentType, dateFrom, dateTo);
-      autoRefresh = false;
-      refreshIcon.innerText = "play_arrow";
-    });
-  }
-
-  // --- Pause/Resume auto-refresh ---
-  const refreshBtn = document.getElementById("refreshControl");
-  const refreshIcon = document.getElementById("refreshIcon");
-
   refreshBtn.addEventListener("click", () => {
     autoRefresh = !autoRefresh;
+    refreshIcon.innerText = autoRefresh ? "pause" : "play_arrow";
+
     if (autoRefresh) {
-      refreshIcon.innerText = "pause";
       startCountdown();
     } else {
-      refreshIcon.innerText = "play_arrow";
       clearInterval(countdownInterval);
     }
   });
 
-  // --- Initial load ---
-  fetchData(currentType);
+  autoCarouselCheckbox.addEventListener("change", () => {
+    const autoCarousel = autoCarouselCheckbox.checked;
+    if (autoCarousel) {
+      collapseInstance.hide();
+      productSelect.value = "";
+      currentType = "";
+    } else {
+      collapseInstance.show();
+    }
+  });
 
-  // --- Resize chart on window resize ---
+  // =========================
+  // 🔹 Init
+  // =========================
+  fetchData(currentType);
+  updateAutoCarouselState();
   window.addEventListener("resize", () => chart.resize());
 });
