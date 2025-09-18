@@ -1,18 +1,27 @@
 document.addEventListener("DOMContentLoaded", () => {
   const initialType = "<%= type %>";
   const productSelect = document.getElementById("productSelect");
+  const hideControllerCheckbox = document.getElementById("hideControllers");
+
+  const loadingEl = document.getElementById("loading-spinner");
+  const mainContent = document.getElementById("main-content");
+  const refreshBtn = document.getElementById("refreshControl");
+  const refreshIcon = document.getElementById("refreshIcon");
+  const submitBtn = document.getElementById("submitBtn");
+  const dateFromEl = document.getElementById("datetimeFrom");
+  const dateToEl = document.getElementById("datetimeTo");
+  const applyLimitsBtn = document.getElementById("applyLimitsBtn");
+
   let chart, slider, rangeLabel, statsTableBody;
   let scatterData = [];
   let selectedProduct = null;
   let currentType = initialType;
 
-  // Auto-refresh
-  let refreshTime = 105; // seconds
+  let refreshTime = 105;
   let timeLeft = refreshTime;
   let autoRefresh = true;
   let countdownInterval;
 
-  // Product configs
   const productList = [
     {
       productName: "LL",
@@ -48,47 +57,50 @@ document.addEventListener("DOMContentLoaded", () => {
     pressureLcl: "",
   };
 
-  // --- Init ---
-  fetchData(initialType);
-
-  // --- Dropdown listener ---
-  productSelect.addEventListener("change", (e) => {
-    currentType = e.target.value;
-    timeLeft = refreshTime;
-    fetchData(currentType);
-    startCountdown();
-
-    document.getElementById("datetimeFrom").value = "";
-    document.getElementById("datetimeTo").value = "";
-  });
-
-  // --- Fetch data + render ---
-  function fetchData(type) {
-    // Stop countdown while fetching
+  // --- Countdown ---
+  function startCountdown() {
     clearInterval(countdownInterval);
+    if (!autoRefresh) return;
 
-    document.getElementById("loading-spinner").style.display = "block";
-    document.getElementById("main-content").style.display = "none";
+    countdownInterval = setInterval(() => {
+      const countdownLabel = document.getElementById("countdown");
+      if (countdownLabel)
+        countdownLabel.textContent = `Refreshing in: ${timeLeft}s`;
+      timeLeft--;
+      if (timeLeft < 0) {
+        fetchData(currentType);
+        timeLeft = refreshTime;
+      }
+    }, 1000);
+  }
 
-    fetch(`/psmax/data?type=${type}`)
+  // --- Fetch Data ---
+  function fetchData(type, dateFrom = "", dateTo = "") {
+    clearInterval(countdownInterval);
+    if (loadingEl) loadingEl.style.display = "block";
+    if (mainContent) mainContent.style.display = "none";
+
+    let url = `/psmax/data?type=${type}`;
+    if (dateFrom && dateTo) url += `&dateFrom=${dateFrom}&dateTo=${dateTo}`;
+
+    fetch(url)
       .then((res) => res.json())
       .then(({ models }) => {
-        document.getElementById("loading-spinner").style.display = "none";
-        document.getElementById("main-content").style.display = "block";
+        if (loadingEl) loadingEl.style.display = "none";
+        if (mainContent) mainContent.style.display = "block";
         renderMain(models, type);
       })
       .catch((err) => {
         console.error(err);
-        document.getElementById("loading-spinner").innerHTML =
-          "Failed to load data!";
+        if (loadingEl) loadingEl.innerHTML = "Failed to load data!";
       })
       .finally(() => {
-        // Reset countdown after fetch completes
         timeLeft = refreshTime;
-        startCountdown();
+        if (autoRefresh) startCountdown();
       });
   }
 
+  // --- Render Main ---
   function renderMain(models, type) {
     scatterData = models.map((m) => [
       new Date(m.dt).getTime(),
@@ -107,23 +119,18 @@ document.addEventListener("DOMContentLoaded", () => {
       rangeLabel = document.getElementById("rangeLabel");
     }
 
-    // ✅ Handle no data case
     if (!scatterData.length) {
       chart.clear();
-      statsTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#888;">No data available</td></tr>`;
-      if (slider && slider.noUiSlider) {
-        slider.noUiSlider.destroy();
-      }
-      rangeLabel.textContent = "Time: N/A";
+      if (statsTableBody)
+        statsTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#888;">No data available</td></tr>`;
+      if (slider && slider.noUiSlider) slider.noUiSlider.destroy();
+      if (rangeLabel) rangeLabel.textContent = "Time: N/A";
       return;
     }
 
-    // --- Setup slider ---
-    if (slider && slider.noUiSlider) {
-      slider.noUiSlider.destroy();
-    }
+    // Slider
+    if (slider && slider.noUiSlider) slider.noUiSlider.destroy();
     slider = document.getElementById("timeSlider");
-
     const times = scatterData.map((d) => d[0]);
     const minTime = Math.min(...times);
     const maxTime = Math.max(...times);
@@ -138,13 +145,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     slider.noUiSlider.on("update", () => {
       const [from, to] = slider.noUiSlider.get().map(Number);
-      rangeLabel.textContent = `Time: ${formatTime(from)} ~ ${formatTime(to)}`;
+      if (rangeLabel)
+        rangeLabel.textContent = `Time: ${formatTime(from)} ~ ${formatTime(
+          to
+        )}`;
       refreshChart();
     });
 
     refreshChart();
-
-    // ✅ Ensure chart resizes properly
     requestAnimationFrame(() => chart.resize());
     window.addEventListener("resize", () => chart.resize());
   }
@@ -157,30 +165,31 @@ document.addEventListener("DOMContentLoaded", () => {
     )} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
+  // --- Build Chart Option ---
   function buildChartOption(data, productConfig) {
     const speeds = data.map((d) => d[1]);
     const pressures = data.map((d) => d[2]);
-    const xMax = Math.max(...speeds, 0);
-    const yMax = Math.max(...pressures, 0);
+    const xMax = Math.max(...speeds, 0) + 100;
+    const yMax = Math.max(...pressures, 0) + 100;
 
+    let okData = data;
+    let ngData = [];
     let markLine = null;
-    let okData = data; //normal
-    let ngData = []; //warn-up
 
     if (productConfig) {
-      const sMin = manualControlLine.speedLcl
-        ? manualControlLine.speedLcl
-        : productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
-      const sMax = manualControlLine.speedUcl
-        ? manualControlLine.speedUcl
-        : productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
-      const pMin = manualControlLine.pressureLcl
-        ? manualControlLine.pressureLcl
-        : productConfig.castingPressure.target -
+      const sMin =
+        manualControlLine.speedLcl ||
+        productConfig.highSpeed.target - productConfig.highSpeed.tolerance;
+      const sMax =
+        manualControlLine.speedUcl ||
+        productConfig.highSpeed.target + productConfig.highSpeed.tolerance;
+      const pMin =
+        manualControlLine.pressureLcl ||
+        productConfig.castingPressure.target -
           productConfig.castingPressure.tolerance;
-      const pMax = manualControlLine.pressureUcl
-        ? manualControlLine.pressureUcl
-        : productConfig.castingPressure.target +
+      const pMax =
+        manualControlLine.pressureUcl ||
+        productConfig.castingPressure.target +
           productConfig.castingPressure.tolerance;
 
       okData = data.filter(
@@ -192,26 +201,10 @@ document.addEventListener("DOMContentLoaded", () => {
         silent: true,
         lineStyle: { type: "dashed", color: "red" },
         data: [
-          {
-            xAxis: manualControlLine.speedLcl
-              ? manualControlLine.speedLcl
-              : sMin,
-          },
-          {
-            xAxis: manualControlLine.speedUcl
-              ? manualControlLine.speedUcl
-              : sMax,
-          },
-          {
-            yAxis: manualControlLine.pressureLcl
-              ? manualControlLine.pressureLcl
-              : pMin,
-          },
-          {
-            yAxis: manualControlLine.pressureUcl
-              ? manualControlLine.pressureUcl
-              : pMax,
-          },
+          { xAxis: sMin },
+          { xAxis: sMax },
+          { yAxis: pMin },
+          { yAxis: pMax },
         ],
       };
     }
@@ -232,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
         type: "value",
         name: "Max Speed(cm/s)",
         min: 0,
-        max: xMax + 100,
+        max: xMax,
         nameLocation: "center",
         nameGap: 35,
         nameTextStyle: { fontSize: 20, fontWeight: "bold" },
@@ -242,7 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
         type: "value",
         name: "Max Pressure(bar)",
         min: 0,
-        max: yMax + 100,
+        max: yMax,
         nameLocation: "center",
         nameGap: 50,
         nameTextStyle: { fontSize: 20, fontWeight: "bold" },
@@ -273,30 +266,29 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateStatsTable(data) {
-    statsTableBody.innerHTML = "";
-    if (!selectedProduct) return;
+    if (!statsTableBody || !selectedProduct) return;
 
+    statsTableBody.innerHTML = "";
     const p = selectedProduct;
     const pData = data.filter((d) => d[4] === p.productName);
     const total = pData.length;
-    const sMin = manualControlLine.speedLcl
-      ? manualControlLine.speedLcl
-      : p.highSpeed.target - p.highSpeed.tolerance;
-    const sMax = manualControlLine.speedUcl
-      ? manualControlLine.speedUcl
-      : p.highSpeed.target + p.highSpeed.tolerance;
-    const pMin = manualControlLine.pressureLcl
-      ? manualControlLine.pressureLcl
-      : p.castingPressure.target - p.castingPressure.tolerance;
-    const pMax = manualControlLine.pressureUcl
-      ? manualControlLine.pressureUcl
-      : p.castingPressure.target + p.castingPressure.tolerance;
+    const sMin =
+      manualControlLine.speedLcl || p.highSpeed.target - p.highSpeed.tolerance;
+    const sMax =
+      manualControlLine.speedUcl || p.highSpeed.target + p.highSpeed.tolerance;
+    const pMin =
+      manualControlLine.pressureLcl ||
+      p.castingPressure.target - p.castingPressure.tolerance;
+    const pMax =
+      manualControlLine.pressureUcl ||
+      p.castingPressure.target + p.castingPressure.tolerance;
+
     const okCount = pData.filter(
       (d) => d[1] >= sMin && d[1] <= sMax && d[2] >= pMin && d[2] <= pMax
     ).length;
     const ngCount = total - okCount;
 
-    statsTableBody.innerHTML += `
+    statsTableBody.innerHTML = `
       <tr><td>${
         p.productName
       }</td><td>Warm-Up</td><td>${ngCount}</td><td>${total}</td><td>${
@@ -322,110 +314,62 @@ document.addEventListener("DOMContentLoaded", () => {
     updateStatsTable(filtered);
   }
 
-  // --- Countdown ---
-  const refreshBtn = document.getElementById("refreshControl");
-  const refreshIcon = document.getElementById("refreshIcon");
-
-  function startCountdown() {
-    clearInterval(countdownInterval);
-    if (!autoRefresh) return;
-
-    countdownInterval = setInterval(() => {
-      document.getElementById(
-        "countdown"
-      ).innerText = `Refreshing in: ${timeLeft}s`;
-      timeLeft--;
-      if (timeLeft < 0) {
-        fetchData(currentType);
-        timeLeft = refreshTime;
-      }
-    }, 1000);
-  }
-
-  refreshBtn.addEventListener("click", () => {
+  // --- Event Listeners ---
+  refreshBtn?.addEventListener("click", () => {
     autoRefresh = !autoRefresh;
-    if (autoRefresh) {
-      refreshIcon.innerText = "pause";
-      startCountdown();
-    } else {
-      refreshIcon.innerText = "play_arrow";
-      clearInterval(countdownInterval);
-    }
+    refreshIcon.innerText = autoRefresh ? "pause" : "play_arrow";
+    if (autoRefresh) startCountdown();
+    else clearInterval(countdownInterval);
   });
 
-  function startCountdown() {
+  productSelect?.addEventListener("change", (e) => {
+    currentType = e.target.value;
+    timeLeft = refreshTime;
+    fetchData(currentType);
+    startCountdown();
+    if (dateFromEl) dateFromEl.value = "";
+    if (dateToEl) dateToEl.value = "";
+  });
+
+  submitBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    autoRefresh = false;
+    refreshIcon.innerText = "play_arrow";
     clearInterval(countdownInterval);
-    if (!autoRefresh) return;
+    fetchData(currentType, dateFromEl.value, dateToEl.value);
+  });
 
-    countdownInterval = setInterval(() => {
-      document.getElementById(
-        "countdown"
-      ).innerText = `Refreshing in: ${timeLeft}s`;
-      timeLeft--;
-      if (timeLeft < 0) {
-        fetchData(currentType);
-        timeLeft = refreshTime;
-      }
-    }, 1000);
-  }
+  applyLimitsBtn?.addEventListener("click", () => {
+    manualControlLine.speedUcl = Number(
+      document.getElementById("speedUCL").value
+    );
+    manualControlLine.speedLcl = Number(
+      document.getElementById("speedLCL").value
+    );
+    manualControlLine.pressureUcl = Number(
+      document.getElementById("pressureUCL").value
+    );
+    manualControlLine.pressureLcl = Number(
+      document.getElementById("pressureLCL").value
+    );
+    refreshChart();
+  });
 
-  // --- Manual Date Range Submission ---
-  const submitBtn = document.getElementById("submitBtn");
-  if (submitBtn) {
-    submitBtn.addEventListener("click", (e) => {
-      e.preventDefault(); // prevent form reload
+  hideControllerCheckbox?.addEventListener("change", () => {
+    const collapseEl = document.getElementById("manual-control");
+    if (!collapseEl) return;
 
-      let dateFrom = document.getElementById("datetimeFrom").value;
-      let dateTo = document.getElementById("datetimeTo").value;
-
-      // Stop countdown (manual filtering should not auto-refresh)
-      clearInterval(countdownInterval);
-      autoRefresh = false;
-      refreshIcon.innerText = "play_arrow";
-
-      // Fetch with date range
-      loadData(currentType, dateFrom, dateTo);
-    });
-  }
-
-  // --- New loadData (manual fetch by date range) ---
-  function loadData(type, dateFrom, dateTo) {
-    document.getElementById("loading-spinner").style.display = "block";
-    document.getElementById("main-content").style.display = "none";
-
-    let url = `/psmax/data?type=${type}`;
-    if (dateFrom && dateTo) {
-      url += `&dateFrom=${dateFrom}&dateTo=${dateTo}`;
+    let collapseInstance = bootstrap.Collapse.getInstance(collapseEl);
+    if (!collapseInstance) {
+      collapseInstance = new bootstrap.Collapse(collapseEl, { toggle: false });
     }
-    fetch(url)
-      .then((res) => res.json())
-      .then(({ models }) => {
-        document.getElementById("loading-spinner").style.display = "none";
-        document.getElementById("main-content").style.display = "block";
-        renderMain(models, type);
-      })
-      .catch((err) => {
-        console.error(err);
-        document.getElementById("loading-spinner").innerHTML =
-          "Failed to load data!";
-      });
-  }
 
-  // --- Manual Apply Limits ---
-  const applyLimitsBtn = document.getElementById("applyLimitsBtn");
-  if (applyLimitsBtn) {
-    applyLimitsBtn.addEventListener("click", () => {
-      const sMin = Number(document.getElementById("speedLCL").value);
-      const sMax = Number(document.getElementById("speedUCL").value);
-      const pMin = Number(document.getElementById("pressureLCL").value);
-      const pMax = Number(document.getElementById("pressureUCL").value);
-
-      manualControlLine.speedUcl = sMax;
-      manualControlLine.speedLcl = sMin;
-      manualControlLine.pressureUcl = pMax;
-      manualControlLine.pressureLcl = pMin;
-      // Re-render
-      refreshChart();
-    });
-  }
+    if (hideControllerCheckbox.checked) {
+      collapseInstance.hide();
+    } else {
+      collapseInstance.show();
+    }
+  });
+  // --- Initial load ---
+  fetchData(initialType);
 });
