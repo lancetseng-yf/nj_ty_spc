@@ -1,0 +1,29 @@
+<div class="form-check">
+  <input
+    class="form-check-input"
+    type="checkbox"
+    id="hideControllers"
+    name="hideControllers"
+    checked
+  />
+  <label class="form-check-label" for="hideControllers">Hide Controllers</label>
+</div>
+
+<script>
+  const hideControllerCheckbox = document.getElementById("hideControllers");
+  hideControllerCheckbox?.addEventListener("change", () => {
+    const collapseEl = document.getElementById("manual-control");
+    if (!collapseEl) return;
+
+    let collapseInstance = bootstrap.Collapse.getInstance(collapseEl);
+    if (!collapseInstance) {
+      collapseInstance = new bootstrap.Collapse(collapseEl, { toggle: false });
+    }
+
+    if (hideControllerCheckbox.checked) {
+      collapseInstance.hide();
+    } else {
+      collapseInstance.show();
+    }
+  });
+</script>
