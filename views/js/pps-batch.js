@@ -16,20 +16,47 @@ let countdownInterval;
 let autoRefresh = true;
 
 // --- Utility ---
-function fmtDateYMDHMS(d) {
-  const pad = (n) => (n < 10 ? "0" + n : n);
-  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(
-    d.getHours()
-  )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+
+// NEW: Helper function to parse date strings as UTC
+// This prevents the browser's local timezone from changing the time values.
+function parseDateAsUTC(dateString) {
+  if (!dateString) {
+    console.error("Received an invalid date string:", dateString);
+    return new Date(); // Return current time as a fallback
+  }
+  // Reformat 'YYYY/MM/DD HH:MM:SS' to 'YYYY-MM-DDTHH:MM:SSZ'
+  // The 'Z' suffix forces JavaScript to parse the string as UTC.
+  const isoString = dateString.replace(/\//g, "-").replace(" ", "T") + "Z";
+  const date = new Date(isoString);
+  // Check if the date is valid after parsing
+  if (isNaN(date.getTime())) {
+    console.error("Failed to parse date string as UTC:", dateString);
+    return new Date(); // Fallback for invalid formats
+  }
+  return date;
 }
 
+// UPDATED: Use getUTC* methods to format the date
+// This displays the time based on the UTC value, ignoring the local timezone.
+function fmtDateYMDHMS(d) {
+  const pad = (n) => (n < 10 ? "0" + n : n);
+  return `${d.getUTCFullYear()}/${pad(d.getUTCMonth() + 1)}/${pad(
+    d.getUTCDate()
+  )} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(
+    d.getUTCSeconds()
+  )}`;
+}
+
+// UPDATED: Use the new UTC parser
 function buildTimeValuePairs(arr, dt, id) {
-  const start = new Date(dt).getTime();
+  // Use the new UTC parser to get a timezone-neutral timestamp
+  const start = parseDateAsUTC(dt).getTime();
   const duration = 8000; // 8s per id
   const step = duration / arr.length; // ms per sample
 
   const points = arr.map((v, i) => ({
-    value: [new Date(start + i * step), v],
+    // Pass the raw timestamp (a number) to ECharts for better performance
+    value: [start + i * step, v],
     diecastingId: id,
   }));
 
@@ -76,7 +103,9 @@ function buildChartOption(models) {
       trigger: "axis",
       axisPointer: { type: "cross" },
       formatter: (params) => {
-        if (!params.length) return "";
+        if (!params.length || !params[0].value) return "";
+        // The timestamp from ECharts is a number; create a Date object from it.
+        // The updated fmtDateYMDHMS will then format it correctly in UTC.
         const time = params[0]?.value?.[0]
           ? fmtDateYMDHMS(new Date(params[0].value[0]))
           : "";
