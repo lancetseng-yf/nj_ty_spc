@@ -71,6 +71,7 @@ function mapDbItemToModel(item, rawModel) {
     speed: normalizeArray(rawSpeed, 1),
     sm: item.sm ?? 0,
     dt: item.create_time,
+    create_time: item.create_time,
     type: typeLabel,
 
     // ✅ new fields from your JSON model
@@ -106,7 +107,7 @@ async function fetchPpsData(type, limit, dateFrom = null, dateTo = null) {
 
     // ✅ Add date range if provided
     if (dateFrom && dateTo) {
-      whereCondition.dt = {
+      whereCondition.create_time = {
         [Op.between]: [literal(`'${dateFrom}'`), literal(`'${dateTo}'`)],
       };
     }

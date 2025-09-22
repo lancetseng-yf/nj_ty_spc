@@ -23,7 +23,7 @@ app.use("/biscuit", require("./routes/biscuit"));
 
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT} (v1.3)`);
+  console.log(`Server is running on http://localhost:${PORT} (v1.31)`);
   // Test DB connection
   sequelize.authenticate()
   .then(()=> console.log(`DB connected(${process.env.ENVIRONMENT})`))
