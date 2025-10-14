@@ -89,6 +89,7 @@ function mapDbItemToModel(item, rawModel) {
     vacuum_pressure7: item.vacuum_pressure7 ?? 0,
     vacuum_pressure8: item.vacuum_pressure8 ?? 0,
     lv: item.lv ?? 0,
+    lasercode: item.lasercode || "",
   };
 }
 
