@@ -14,7 +14,7 @@ h1 {
   margin-bottom: 30px;
 }
 
-#controls {
+#controls, #sn-control {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -27,9 +27,19 @@ h1 {
   width: fit-content;
 }
 
-#controls label {
+#controls label, #sn-control label {
   font-size: 20px;
   font-weight: 500;
+}
+
+#sn-control input[type="text"] {
+  flex: 1; /* expand to fill space */
+  min-width: 300px; /* Adjusted min-width for better fit */
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease-in-out;
 }
 
 #productSelect {
@@ -47,7 +57,7 @@ h1 {
   border-color: #9ca3af;
 }
 
-#controls button {
+#controls button, #sn-control button {
   font-size: 18px;
   padding: 8px 16px;
   border: none;

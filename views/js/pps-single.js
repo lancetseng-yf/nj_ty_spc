@@ -19,6 +19,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const submitBtn = document.getElementById("submitBtn");
   const dateFromEl = document.getElementById("datetimeFrom");
   const dateToEl = document.getElementById("datetimeTo");
+  const submitSnBtn = document.getElementById("snSearchBtn");
+  const snEl = document.getElementById("snInput");
 
   // =========================
   // 🔹 State
@@ -208,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================
   // 🔹 Data Fetching
   // =========================
-  function fetchData(type, dateFrom, dateTo) {
+  function fetchData(type, dateFrom, dateTo, sn) {
     clearInterval(countdownInterval);
     loadingSpinner.style.display = "block";
     chart.clear();
@@ -218,6 +220,9 @@ document.addEventListener("DOMContentLoaded", () => {
       url += `&dateFrom=${encodeURIComponent(
         dateFrom
       )}&dateTo=${encodeURIComponent(dateTo)}`;
+    }
+    if (sn) {
+      url += `&sn=${encodeURIComponent(sn)}`;
     }
 
     fetch(url)
@@ -281,6 +286,17 @@ document.addEventListener("DOMContentLoaded", () => {
     clearInterval(countdownInterval);
 
     fetchData(productSelect.value, dateFrom, dateTo);
+  });
+
+  
+   submitSnBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const sn = snEl.value;
+    autoRefresh = false;
+    refreshIcon.innerText = "play_arrow";
+    clearInterval(countdownInterval);
+
+    fetchData(null, null, null, sn);
   });
 
   autoCarouselCheckbox.addEventListener("change", () => {

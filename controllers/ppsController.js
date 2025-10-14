@@ -94,7 +94,13 @@ function mapDbItemToModel(item, rawModel) {
 }
 
 // --- Data Fetching Logic ---
-async function fetchPpsData(type, limit, dateFrom = null, dateTo = null) {
+async function fetchPpsData(
+  type,
+  limit,
+  dateFrom = null,
+  dateTo = null,
+  sn = null
+) {
   const rawModel = modelJson || {};
   const lasercode = getLaserCode(type);
 
@@ -103,7 +109,6 @@ async function fetchPpsData(type, limit, dateFrom = null, dateTo = null) {
       speed: { [Op.ne]: null },
       position: { [Op.ne]: null },
       casting_pressure: { [Op.ne]: null },
-      lasercode: { [Op.like]: `%${lasercode}%` },
     };
 
     // ✅ Add date range if provided
@@ -111,6 +116,12 @@ async function fetchPpsData(type, limit, dateFrom = null, dateTo = null) {
       whereCondition.create_time = {
         [Op.between]: [literal(`'${dateFrom}'`), literal(`'${dateTo}'`)],
       };
+    }
+
+    if (sn) {
+      whereCondition.lasercode = { [Op.like]: `%${sn}%` };
+    } else {
+      whereCondition.lasercode = { [Op.like]: `%${lasercode}%` };
     }
 
     const queryOptions = {
@@ -159,8 +170,9 @@ exports.getSingleData = async (req, res) => {
   const typeSelect = req.query.type || "";
   const dateFrom = req.query.dateFrom;
   const dateTo = req.query.dateTo;
+  const sn = req.query.sn || "";
   try {
-    const models = await fetchPpsData(typeSelect, 100, dateFrom, dateTo);
+    const models = await fetchPpsData(typeSelect, 100, dateFrom, dateTo, sn);
     res.json({ models: models, type: typeSelect });
   } catch (error) {
     res.status(500).json({ error: error.message });
