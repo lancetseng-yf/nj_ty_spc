@@ -20,5 +20,6 @@
   "vacuum_pressure6": 1,
   "vacuum_pressure7": 1,
   "vacuum_pressure8": 1,
-  "lv": 1
+  "lv": 1,
+  "lasercode":""
 }
