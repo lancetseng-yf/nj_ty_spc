@@ -102,9 +102,16 @@ function buildChartOption(models) {
           (m) => m.diecasting_eigenvalue_data_id == firstId
         );
         const sm = model?.sm ?? "N/A";
+        const lasercode = model?.lasercode || "N/A";
+        const id = model?.diecasting_eigenvalue_data_id || "N/A";
 
         return (
-          `<b>Time:</b> ${time}<br><b>Biscuit:</b> ${sm}<br>` +
+          `<b>Time:</b> ${time}<br>
+          <b>Biscuit:</b> ${sm}<br>
+          <b>Laser Code:</b> ${lasercode}<br>
+           <b>ID:</b> ${id}<br>
+          ` +
+          
           params
             .map(
               (p) =>
