@@ -16,6 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const refreshIcon = document.getElementById("refreshIcon");
   const loadingSpinner = document.getElementById("loading-spinner");
   const countdownEl = document.getElementById("countdown");
+  const submitBtn = document.getElementById("submitBtn");
+  const dateFromEl = document.getElementById("datetimeFrom");
+  const dateToEl = document.getElementById("datetimeTo");
 
   // =========================
   // 🔹 State
@@ -126,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return {
       title: {
-        text: `${model.type || "N/A"} - ${model.dt}`,
+        text: `${model.type}_${model.lasercode || "N/A"}_${model.dt}`,
         left: "center",
         top: 10,
         textStyle: { fontSize: 24 },
@@ -140,10 +143,12 @@ document.addEventListener("DOMContentLoaded", () => {
       tooltip: {
         trigger: "axis",
         formatter: function (params) {
+          let lasercode = model.lasercode || "N/A";
           let time = params[0].data[0];
           let tooltipText = `Time: ${time.toFixed(3)}s<br/>Biscuit: ${
             model.sm
-          }<br/>`;
+          }<br/>
+          Laser Code: ${lasercode}<br/>`;
 
           params.forEach((p) => {
             let displayValue = ["Pressure", "Speed"].includes(p.seriesName)
@@ -264,6 +269,18 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       clearInterval(countdownInterval);
     }
+  });
+
+  submitBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const dateFrom = dateFromEl.value;
+    const dateTo = dateToEl.value;
+
+    autoRefresh = false;
+    refreshIcon.innerText = "play_arrow";
+    clearInterval(countdownInterval);
+
+    fetchData(productSelect.value, dateFrom, dateTo);
   });
 
   autoCarouselCheckbox.addEventListener("change", () => {
