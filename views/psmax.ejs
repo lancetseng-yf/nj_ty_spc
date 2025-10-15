@@ -4,22 +4,13 @@
     <meta charset="UTF-8" />
     <title>Max Pressure vs Max Speed</title>
 
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/wnumb/1.2.0/wNumb.min.js"></script>
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="/libs/nouislider/nouislider.min.css" />
+    <script src="/libs/echarts/echarts.min.js"></script>
+    <script src="/libs/nouislider/nouislider.min.js"></script>
+    <script src="/libs/wnumb/wNumb.min.js"></script>
+    <link rel="stylesheet" href="/libs/material-icons/material-icons.css" />
+    <link rel="stylesheet" href="/libs/bootstrap/bootstrap.min.css" />
+    <script src="/libs/bootstrap/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="/css/psmax.css" />
   </head>
   <body>
@@ -33,92 +24,91 @@
       <div id="controls">
         <%- include("partials/_product-dropbox") %>
         <%-include("partials/_countdown-control") %>
-         <%-include("partials/_hide-manual-control") %>
-        </div>
+        <%-include("partials/_hide-manual-control") %>
       </div>
+    </div>
 
-      <div class="collapse" id="manual-control">
-        <div class="controls"><%- include("partials/_datetimepicker") %></div>
-        <div class="controls">
-          <table id="limitsTable">
-            <thead>
-              <tr>
-                <th></th>
-                <th>LCL</th>
-                <th>UCL</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><b>Speed</b></td>
-                <td>
-                  <input
-                    class="form-control"
-                    type="number"
-                    id="speedLCL"
-                    value=""
-                  />
-                </td>
-                <td>
-                  <input
-                    class="form-control"
-                    type="number"
-                    id="speedUCL"
-                    value=""
-                  />
-                </td>
-                <!-- Merge this cell across 2 rows -->
-                <td
-                  rowspan="2"
-                  style="text-align: center; vertical-align: middle"
-                >
-                  <button id="applyLimitsBtn">Apply to Chart</button>
-                </td>
-              </tr>
-              <tr>
-                <td><b>Pressure</b></td>
-                <td>
-                  <input
-                    class="form-control"
-                    type="number"
-                    id="pressureLCL"
-                    value=""
-                  />
-                </td>
-                <td>
-                  <input
-                    class="form-control"
-                    type="number"
-                    id="pressureUCL"
-                    value=""
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <!-- statistic data -->
+    <div class="collapse" id="manual-control">
+      <div class="controls"><%- include("partials/_datetimepicker") %></div>
       <div class="controls">
-        <table id="statsTable">
+        <table id="limitsTable">
           <thead>
             <tr>
-              <th>Product</th>
-              <th>Status</th>
-              <th>Count</th>
-              <th>Total</th>
-              <th>Percent</th>
+              <th></th>
+              <th>LCL</th>
+              <th>UCL</th>
+              <th></th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody>
+            <tr>
+              <td><b>Speed</b></td>
+              <td>
+                <input
+                  class="form-control"
+                  type="number"
+                  id="speedLCL"
+                  value=""
+                />
+              </td>
+              <td>
+                <input
+                  class="form-control"
+                  type="number"
+                  id="speedUCL"
+                  value=""
+                />
+              </td>
+              <!-- Merge this cell across 2 rows -->
+              <td
+                rowspan="2"
+                style="text-align: center; vertical-align: middle"
+              >
+                <button id="applyLimitsBtn">Apply to Chart</button>
+              </td>
+            </tr>
+            <tr>
+              <td><b>Pressure</b></td>
+              <td>
+                <input
+                  class="form-control"
+                  type="number"
+                  id="pressureLCL"
+                  value=""
+                />
+              </td>
+              <td>
+                <input
+                  class="form-control"
+                  type="number"
+                  id="pressureUCL"
+                  value=""
+                />
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
-
-      <div id="chart"></div>
-      <div id="rangeLabel"></div>
-      <div id="timeSlider"></div>
     </div>
+    <!-- statistic data -->
+    <div class="controls">
+      <table id="statsTable">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Status</th>
+            <th>Count</th>
+            <th>Total</th>
+            <th>Percent</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div id="chart"></div>
+    <div id="rangeLabel"></div>
+    <div id="timeSlider"></div>
 
     <script src="/js/psmax.js"></script>
   </body>
