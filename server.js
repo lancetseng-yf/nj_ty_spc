@@ -20,9 +20,10 @@ app.use("/pps", require("./routes/pps"));
 app.use("/psmax", require("./routes/psmax"));
 app.use("/bmw-kanban", require("./routes/bmw-kanban"));
 app.use("/biscuit", require("./routes/biscuit"));
+app.use("/diecasting-report", require("./routes/diecasting-report"));
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT} (v1.31)`);
+  console.log(`Server is running on http://localhost:${PORT} (v1.32)`);
   // Test DB connection
   sequelize
     .authenticate()

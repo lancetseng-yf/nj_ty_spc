@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+     <link rel="stylesheet" href="/libs/bootstrap/bootstrap.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+    <link rel="stylesheet" href="/css/diecasting-report.css">
+    <title>Die Casting Report</title>
+  </head>
+  <body>
+    <h1>Die Casting Report</h1>
+    <div id="controls">
+    <div class="parent">
+        <div>
+            <label for="machineSelect">Select Product:</label>
+            <select id="machineSelect">
+              <% ["","6000T","4000T"].forEach(p => { %>
+                <option value="<%= p %>" <%= p === type ? "selected" : "" %>><%= p %></option>
+              <% }) %>
+           </select>
+        </div>
+        <div>
+            <div id="myGrid" style="width: 100%; height: 100%"></div>
+        </div>
+    </div>
+    </div>
+    <script src="/js/diecasting-report.js"></script>
+  </body>
+</html>
