@@ -24,8 +24,7 @@ h1 {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   font-size: 18px;
   margin: 0 auto 20px auto;
-  height: 800px;
-  width: 1800px;
+
 }
 
 #controls label {
@@ -61,4 +60,10 @@ h1 {
 
 #myGrid {
   height: 100%;
+}
+
+.ag-theme-alpine {
+  --ag-header-height: 48px;
+  --ag-row-height: 100px; /* Keep row height for charts */
+  --ag-font-size: 13px;
 }
