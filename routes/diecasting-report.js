@@ -6,6 +6,6 @@ const diecastingReportController = require("../controllers/diecastingReportContr
 router.get("/", diecastingReportController.renderDiecastingReportPage);
 
 // --- Route 2: Provide JSON data ---
-// router.get("/data", diecastingReportController.getDiecastingData);
+router.get("/data", diecastingReportController.getDiecastingData);
 
 module.exports = router;
