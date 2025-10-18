@@ -5,24 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/libs/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="/libs/flatpickr/flatpickr.min.css" />
-      <script src="/libs/echarts/echarts.min.js"></script>
+    <script src="/libs/echarts/echarts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
-     <script src="/libs/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="/libs/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="/libs/flatpickr/flatpickr.min.js"></script>
     <link rel="stylesheet" href="/css/diecasting-report.css" />
+    <link rel="stylesheet" href="/css/datetimepicker.css" />
     <title>Die Casting Report</title>
   </head>
   <body>
     <h1>Die Casting Report</h1>
-    <div  class="container-wrapper">
-      <div id="controls" style="margin-bottom: 1rem">
-         <label for="machineSelect">Select:</label>
-        <select id="machineSelect">
-              <% ["","6000T"].forEach(p => { %>
+    <div class="container-wrapper">
+      <div id="controls" >
+        <label for="typeSelect">Select:</label>
+        <select id="typeSelect">
+              <% ["","LR","LL","MR","ML"].forEach(p => { %>
                 <option value="<%= p %>" <%= p === type ? "selected" : "" %>><%= p %></option>
               <% }) %>
            </select>
-        <button>Filter</button>
-       
+
+        <div class="d-flex align-items-center gap-2">
+          <label for="datetimeFrom">From:</label>
+          <input
+            type="text"
+            id="datetimeFrom"
+            class="form-control"
+            placeholder="From"
+          />
+          <label for="datetimeTo">To:</label>
+          <input
+            type="text"
+            id="datetimeTo"
+            class="form-control"
+            placeholder="To"
+          />
+        </div>
+        <div>
+          <label for="snInput">SN:</label>
+          <input type="text" id="snInput" placeholder="Enter Lasercode" />
+        </div>
+
+        <button id="btnFilter" class="button btn">Filter</button>
+        <button id="btnClear" class="button btn">Clear</button>
       </div>
       <div class="grid-wrapper">
         <div id="myGrid" class="ag-theme-alpine"></div>

@@ -172,6 +172,10 @@ async function fetchDiecastingReportData6000(
       order: [["create_time", "DESC"]],
     };
 
+    if (!id && !sn && !type && !dateFrom && !dateTo) {
+      queryOptions.limit = 100;
+    }
+
     const dataFromDbDesc = await DiecastingEigenvalueData.findAll(queryOptions);
 
     return dataFromDbDesc.map((item) => mapDbItemToModel(item, rawModel));

@@ -1,20 +1,337 @@
-// Grid Options: Contains all of the Data Grid configurations
+// =================================================================
+// === 1. ECHARTS CUSTOM CELL RENDERER ============================
+// =================================================================
+
+class EChartCellRenderer {
+  init(params) {
+    this.eGui = document.createElement("div");
+    this.eGui.className = "chart-cell-container";
+
+    this.chartDiv = document.createElement("div");
+    this.chartDiv.style.height = "100%";
+    this.chartDiv.style.width = "100%";
+    this.eGui.appendChild(this.chartDiv);
+
+    this.params = params;
+    this.chart = null;
+
+    // Defer chart initialization until DOM attached
+    setTimeout(() => this.renderChart(), 0);
+  }
+
+  getGui() {
+    return this.eGui;
+  }
+
+  renderChart() {
+    let chartData = this.params.value;
+    if (Array.isArray(chartData)) {
+      chartData = chartData
+        .map((val) => {
+          const num = Number(val);
+          return isNaN(num) ? 0 : num;
+        })
+        .filter((val) => typeof val === "number");
+    } else {
+      chartData = [];
+    }
+
+    if (chartData.length === 0) {
+      this.chartDiv.innerHTML =
+        '<div style="text-align:center; padding-top:20px;">No Curve Data</div>';
+      return;
+    }
+
+    this.chart = echarts.init(this.chartDiv);
+
+    const options = {
+      grid: { left: "5%", right: "5%", top: "5%", bottom: "5%" },
+      xAxis: {
+        type: "category",
+        show: false,
+        data: chartData.map((_, i) => i),
+      },
+      yAxis: { type: "value", show: false },
+      series: [
+        {
+          data: chartData,
+          type: "line",
+          smooth: true,
+          showSymbol: false,
+          areaStyle: {
+            opacity: 0.15,
+            color: this.getChartColor(this.params.colDef.field),
+          },
+          lineStyle: {
+            color: this.getChartColor(this.params.colDef.field),
+            width: 2,
+          },
+        },
+      ],
+      tooltip: {
+        trigger: "axis",
+        formatter: (params) =>
+          `Step ${params[0].dataIndex}: ${params[0].value.toFixed(2)}`,
+      },
+    };
+
+    this.chart.setOption(options);
+  }
+
+  getChartColor(field) {
+    const colors = {
+      pressure: "#ef4444",
+      position: "#3b82f6",
+      speed: "#10b981",
+      control: "#f59e0b",
+      feedback: "#8b5cf6",
+      storage_pressure_n2: "#06b6d4",
+      pressurization_pressure_n2: "#f97316",
+      system_pressure: "#d946ef",
+    };
+    return colors[field] || "#6b7280";
+  }
+
+  refresh() {
+    return false;
+  }
+
+  destroy() {
+    if (this.chart) {
+      echarts.dispose(this.chart);
+      this.chart = null;
+    }
+  }
+}
+
+// =================================================================
+// === 2. DATA UTILITIES ==========================================
+// =================================================================
+
+function convertStringToArray(data) {
+  if (typeof data === "string") {
+    try {
+      const jsonArray = JSON.parse(data);
+      if (Array.isArray(jsonArray)) return jsonArray;
+    } catch (e) {
+      return data
+        .split(/, |,| /)
+        .filter((s) => s.trim() !== "")
+        .map(Number);
+    }
+  }
+  return Array.isArray(data) ? data : [];
+}
+
+function normalizeArray(arr) {
+  return arr.map(Number);
+}
+
+const rawModel = {};
+
+// =================================================================
+// === 3. MAP DB ITEM TO MODEL ====================================
+// =================================================================
+
+function mapDbItemToModel(item, rawModel) {
+  const curveFields = [
+    "pressure",
+    "speed",
+    "position",
+    "control",
+    "feedback",
+    "storage_pressure_n2",
+    "pressurization_pressure_n2",
+    "system_pressure",
+  ];
+
+  const model = {
+    ...rawModel,
+    diecasting_eigenvalue_data_id: item.diecasting_eigenvalue_data_id || "",
+    no: item.no || "",
+    dt: item.dt || item.create_time || "",
+    create_time: item.create_time || "",
+    type: item.type || "",
+    lasercode: item.lasercode || "",
+  };
+
+  curveFields.forEach((field) => {
+    const rawData = item[field];
+    const parsedData = Array.isArray(rawData)
+      ? rawData
+      : convertStringToArray(rawData);
+    model[field] = normalizeArray(parsedData);
+  });
+
+  for (const key in item) {
+    if (
+      !curveFields.includes(key) &&
+      typeof item[key] !== "object" &&
+      key !== "models"
+    ) {
+      model[key] = item[key];
+    }
+  }
+
+  return model;
+}
+
+// =================================================================
+// === 4. AG GRID SETUP ===========================================
+// =================================================================
+
+const createChartColumn = (field, headerName) => ({
+  headerName,
+  field,
+  minWidth: 150,
+  cellRenderer: "EChartCellRenderer",
+  cellStyle: { padding: "0", overflow: "visible" },
+});
+
+let gridApi = null;
+let cachedRows = null;
+
 const gridOptions = {
-  // Row Data: The data to be displayed.
-  rowData: [
-    { make: "Tesla", model: "Model Y", price: 64950, electric: true },
-    { make: "Ford", model: "F-Series", price: 33850, electric: false },
-    { make: "Toyota", model: "Corolla", price: 29600, electric: false },
-  ],
-  // Column Definitions: Defines the columns to be displayed.
+  components: { EChartCellRenderer },
+  rowData: [],
+  pagination: true,
+  paginationPageSize: 10,
+  domLayout: "autoHeight",
+  loading: true,
+  defaultColDef: {
+    resizable: true,
+    flex: 1,
+    minWidth: 100,
+  },
   columnDefs: [
-    { field: "make" },
-    { field: "model" },
-    { field: "price" },
-    { field: "electric" },
+    {
+      headerName: "ID",
+      field: "diecasting_eigenvalue_data_id",
+      width: 100,
+      pinned: "left",
+    },
+    { headerName: "Type", field: "type", width: 100 },
+    { headerName: "No", field: "no", width: 100 },
+    { headerName: "Date Time", field: "dt", width: 180 },
+    { headerName: "C1", field: "c1", width: 100 },
+    { headerName: "T1", field: "t1", width: 100 },
+    { headerName: "V1", field: "v1", width: 100 },
+    { headerName: "GP", field: "gp", width: 100 },
+    { headerName: "C2", field: "c2", width: 100 },
+    { headerName: "T2", field: "t2", width: 100 },
+    { headerName: "V2", field: "v2", width: 100 },
+    { headerName: "Create Time", field: "create_time", width: 180 },
+    { headerName: "V Max", field: "vm", width: 100 },
+    { headerName: "CC", field: "cc", width: 100 },
+    { headerName: "T3", field: "t3", width: 100 },
+    { headerName: "TD", field: "td", width: 100 },
+    { headerName: "P Max", field: "pm", width: 100 },
+    { headerName: "PF", field: "pf", width: 100 },
+    { headerName: "VA", field: "va", width: 100 },
+    { headerName: "PR", field: "pr", width: 100 },
+    { headerName: "PS", field: "ps", width: 100 },
+    { headerName: "FC", field: "fc", width: 100 },
+    { headerName: "SM", field: "sm", width: 100 },
+    { headerName: "TC", field: "tc", width: 100 },
+    { headerName: "TP", field: "tp", width: 100 },
+    { headerName: "SE", field: "se", width: 100 },
+    { headerName: "QT", field: "qt", width: 100 },
+    createChartColumn("pressure", "壓力曲線"),
+    { headerName: "Vacuum Pressure", field: "vacuum_pressure", width: 130 },
+    { headerName: "TPT", field: "tpt", width: 100 },
+    { headerName: "Laser Code", field: "lasercode", width: 140 },
+    createChartColumn("position", "位置曲線"),
+    createChartColumn("speed", "速度曲線"),
+    createChartColumn("control", "控制曲線"),
+    createChartColumn("feedback", "反饋曲線"),
+    createChartColumn("storage_pressure_n2", "N2儲存壓力"),
+    createChartColumn("pressurization_pressure_n2", "N2加壓壓力"),
+    { headerName: "LV", field: "lv", width: 100 },
+    createChartColumn("system_pressure", "系統壓力"),
+    { headerName: "Shot Position", field: "shot_position", width: 130 },
   ],
+  onGridReady: async (params) => {
+    gridApi = params.api;
+    console.log("✅ Grid ready");
+    await loadDataFromServer();
+  },
 };
 
-// Your Javascript code to create the Data Grid
-const myGridElement = document.querySelector("#myGrid");
-agGrid.createGrid(myGridElement, gridOptions);
+// =================================================================
+// === 5. FILTER / CLEAR ==========================================
+// =================================================================
+
+document.getElementById("btnFilter").addEventListener("click", (e) => {
+  e.preventDefault();
+  const query = {
+    from: document.getElementById("datetimeFrom").value,
+    to: document.getElementById("datetimeTo").value,
+    sn: document.getElementById("snInput").value,
+    type: document.getElementById("typeSelect").value,
+  };
+  loadDataFromServer(query);
+});
+
+document.getElementById("btnClear").addEventListener("click", (e) => {
+  e.preventDefault();
+  document.getElementById("datetimeFrom").value = "";
+  document.getElementById("datetimeTo").value = "";
+  document.getElementById("snInput").value = "";
+  document.getElementById("typeSelect").value = "";
+  loadDataFromServer({});
+});
+
+// =================================================================
+// === 6. DATA LOADER =============================================
+// =================================================================
+
+async function loadDataFromServer(query = {}) {
+  try {
+    if (gridApi) gridApi.setGridOption("loading", true);
+
+    const url = "/diecasting-report/data?" + new URLSearchParams(query);
+    console.log("📡 Fetching:", url);
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(res.statusText);
+
+    const payload = await res.json();
+    console.log("✅ Payload:", payload);
+
+    const rows = Array.isArray(payload.models)
+      ? payload.models.map((item) => mapDbItemToModel(item, rawModel))
+      : [];
+
+    if (gridApi && typeof gridApi.setGridOption === "function") {
+      gridApi.setGridOption("rowData", rows);
+      gridApi.paginationGoToFirstPage?.();
+    } else {
+      cachedRows = rows;
+    }
+  } catch (err) {
+    console.error("❌ Failed to load diecasting data:", err);
+    if (gridApi) gridApi.setGridOption("rowData", []);
+  } finally {
+    if (gridApi) gridApi.setGridOption("loading", false);
+  }
+}
+
+// =================================================================
+// === 7. DOM INITIALIZATION ======================================
+// =================================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+  const gridDiv = document.querySelector("#myGrid");
+  agGrid.createGrid(gridDiv, gridOptions);
+
+  flatpickr("#datetimeFrom", {
+    enableTime: true,
+    time_24hr: true,
+    dateFormat: "Y-m-d H:i:S",
+  });
+  flatpickr("#datetimeTo", {
+    enableTime: true,
+    time_24hr: true,
+    dateFormat: "Y-m-d H:i:S",
+  });
+});
