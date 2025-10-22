@@ -68,6 +68,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function fmtDateYMDHMS(d) {
+    const pad = (n) => (n < 10 ? "0" + n : n);
+    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(
+      d.getDate()
+    )} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
   // =========================
   // 🔹 Chart Functions
   // =========================
@@ -155,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return {
       title: {
-        text: `${model.type}_${model.lasercode || "N/A"}_${model.dt}`,
+        text: `${model.type}_${model.lasercode || "N/A"}_${new Date(model.dt).toLocaleString()}`,
         left: "center",
         top: 10,
         textStyle: { fontSize: 24 },
@@ -170,9 +177,9 @@ document.addEventListener("DOMContentLoaded", () => {
         trigger: "axis",
         formatter: function (params) {
           const lasercode = model.lasercode || "N/A";
-          const time = params[0].data[0];
+          let time = params[0].data[0];
           let tooltipText = `
-      <b>時間:</b> ${time.toFixed(3)}s<br/>
+      <b>時間:</b> ${time.toFixed(3)}<br/>
       <b>料餅厚度:</b> ${model.sm}<br/>
       <b>雷雕碼:</b> ${lasercode}<br/>
     `;
