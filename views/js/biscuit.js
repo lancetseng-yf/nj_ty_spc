@@ -59,7 +59,7 @@ const buildChartOption = (data, config) => {
 
   return {
     legend: {
-      data: ["Normal", "Below LCL", "Above LCL", "Mean", "UCL", "LCL"],
+      data: ["正常", "低於管制下限", "高於管制上限", "平均值", "管制上限", "管制下限"],
       top: 10,
       textStyle: { fontSize: 16 },
     },
@@ -67,15 +67,15 @@ const buildChartOption = (data, config) => {
       trigger: "item",
       formatter: (p) => {
         if (p.componentType === "markLine") return `${p.name}: ${p.value}`;
-        return `<b>ID:</b> ${p.data.id}<br/><b>Time:</b> ${formatDateTime(
+        return `<b>索引:</b> ${p.data.id}<br/><b>時間:</b> ${formatDateTime(
           p.value[0]
-        )}<br/><b>SM:</b> ${p.value[1]}`;
+        )}<br/><b>料餅厚度:</b> ${p.value[1]}`;
       },
     },
     dataZoom: [{ type: "inside", start: 0, end: 100 }],
     xAxis: {
       type: "time",
-      name: "Time",
+      name: "時間",
       nameLocation: "center",
       nameGap: 50,
       nameTextStyle: { fontSize: 20, fontWeight: "bold" },
@@ -90,7 +90,7 @@ const buildChartOption = (data, config) => {
     },
     yAxis: {
       type: "value",
-      name: "SM(mm)",
+      name: "料餅厚度(mm)",
       min: minY,
       max: maxY,
       nameLocation: "center",
@@ -99,28 +99,28 @@ const buildChartOption = (data, config) => {
     },
     series: [
       {
-        name: "Normal",
+        name: "正常",
         type: "scatter",
         symbolSize: 12,
         data: normal,
         itemStyle: { color: "blue" },
       },
       {
-        name: "Below LCL",
+        name: "低於管制下限",
         type: "scatter",
         symbolSize: 12,
         data: below,
         itemStyle: { color: "orange" },
       },
       {
-        name: "Above LCL",
+        name: "高於管制上限",
         type: "scatter",
         symbolSize: 12,
         data: above,
         itemStyle: { color: "red" },
       },
       {
-        name: "Mean",
+        name: "平均值",
         type: "line",
         data: [],
         markLine: {
@@ -131,7 +131,7 @@ const buildChartOption = (data, config) => {
         itemStyle: { color: "green" },
       },
       {
-        name: "UCL",
+        name: "管制上限",
         type: "line",
         data: [],
         markLine: {
@@ -142,7 +142,7 @@ const buildChartOption = (data, config) => {
         itemStyle: { color: "red" },
       },
       {
-        name: "LCL",
+        name: "管制下限",
         type: "line",
         data: [],
         markLine: {
@@ -222,7 +222,7 @@ if (typeof refreshManager === "undefined") {
         this.timeLeft--;
         document.getElementById(
           "countdown"
-        ).innerText = `Refreshing in: ${this.timeLeft}s`;
+        ).innerText = `${this.timeLeft} 秒後自動刷新`;
         if (this.timeLeft <= 0) {
           fetchData(currentType);
           this.timeLeft = this.refreshTime;

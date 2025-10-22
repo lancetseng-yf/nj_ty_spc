@@ -179,8 +179,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
           params.forEach((p) => {
             let value = p.data[1];
-            // Apply scaling depending on series name
-            if (["Pressure", "Speed"].includes(p.seriesName)) {
+            // Apply scaling depending on sries name
+            if (["壓力", "速度"].includes(p.seriesName)) {
               value = value / scaleFactors.factor15;
             } else if (
               [

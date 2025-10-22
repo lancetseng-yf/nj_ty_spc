@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     countdownInterval = setInterval(() => {
       const countdownLabel = document.getElementById("countdown");
       if (countdownLabel)
-        countdownLabel.textContent = `Refreshing in: ${timeLeft}s`;
+        countdownLabel.textContent = `${timeLeft} 秒後自動刷新`;
       timeLeft--;
       if (timeLeft < 0) {
         fetchData(currentType);
@@ -121,9 +121,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!scatterData.length) {
       chart.clear();
       if (statsTableBody)
-        statsTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#888;">No data available</td></tr>`;
+        statsTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#888;">無資料</td></tr>`;
       if (slider && slider.noUiSlider) slider.noUiSlider.destroy();
-      if (rangeLabel) rangeLabel.textContent = "Time: N/A";
+      if (rangeLabel) rangeLabel.textContent = "時間: N/A";
       return;
     }
 
@@ -145,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
     slider.noUiSlider.on("update", () => {
       const [from, to] = slider.noUiSlider.get().map(Number);
       if (rangeLabel)
-        rangeLabel.textContent = `Time: ${formatTime(from)} ~ ${formatTime(
+        rangeLabel.textContent = `時間: ${formatTime(from)} ~ ${formatTime(
           to
         )}`;
       refreshChart();
@@ -213,16 +213,16 @@ document.addEventListener("DOMContentLoaded", () => {
         trigger: "item",
         formatter: (params) => {
           const [timestamp, speed, pressure, id] = params.data;
-          return `<b>ID:</b> ${id}<br/><b>Time:</b> ${formatTime(
+          return `<b>索引:</b> ${id}<br/><b>時間:</b> ${formatTime(
             timestamp
-          )}<br/><b>Max Speed:</b> ${speed.toFixed(
+          )}<br/><b>最大速度:</b> ${speed.toFixed(
             2
-          )}<br/><b>Max Pressure:</b> ${pressure.toFixed(2)}`;
+          )}<br/><b最大壓力:</b> ${pressure.toFixed(2)}`;
         },
       },
       xAxis: {
         type: "value",
-        name: "Max Speed(cm/s)",
+        name: "最大速度(cm/s)",
         min: 0,
         max: xMax,
         nameLocation: "center",
@@ -232,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       yAxis: {
         type: "value",
-        name: "Max Pressure(bar)",
+        name: "最大壓力(bar)",
         min: 0,
         max: yMax,
         nameLocation: "center",
@@ -290,12 +290,12 @@ document.addEventListener("DOMContentLoaded", () => {
     statsTableBody.innerHTML = `
       <tr><td>${
         p.productName
-      }</td><td>Warm-Up</td><td>${ngCount}</td><td>${total}</td><td>${
+      }</td><td>預熱(Warm-Up)</td><td>${ngCount}</td><td>${total}</td><td>${
       total ? ((ngCount / total) * 100).toFixed(2) + "%" : "0.00%"
     }</td></tr>
       <tr><td>${
         p.productName
-      }</td><td>Normal</td><td>${okCount}</td><td>${total}</td><td>${
+      }</td><td>正常(Normal)</td><td>${okCount}</td><td>${total}</td><td>${
       total ? ((okCount / total) * 100).toFixed(2) + "%" : "0.00%"
     }</td></tr>
     `;

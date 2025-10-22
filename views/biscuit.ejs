@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="/css/biscuit.css" />
   </head>
   <body>
-    <h1>Biscuit Thickness (latest 500 records)</h1>
+    <h1>料餅厚度圖表</h1>
 
     <div id="controls">
       <%- include("partials/_product-dropbox") %>
@@ -30,15 +30,15 @@
           <thead>
             <tr>
               <th></th>
-              <th>LCL</th>
-              <th>UCL</th>
-              <th>MEAN</th>
+              <th>管制下限</th>
+              <th>管制上限</th>
+              <th>平均數</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><b>Thickness</b></td>
+              <td><b>料餅厚度</b></td>
               <td>
                 <input
                   class="form-control"
@@ -68,7 +68,7 @@
                 rowspan="1"
                 style="text-align: center; vertical-align: middle"
               >
-                <button id="applyLimitsBtn">Apply to Chart</button>
+                <button id="applyLimitsBtn">更新圖表</button>
               </td>
             </tr>
           </tbody>

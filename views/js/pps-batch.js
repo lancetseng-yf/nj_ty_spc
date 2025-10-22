@@ -106,17 +106,17 @@ function buildChartOption(models) {
         const id = model?.diecasting_eigenvalue_data_id || "N/A";
 
         return (
-          `<b>Time:</b> ${time}<br>
-          <b>Biscuit:</b> ${sm}<br>
-          <b>Laser Code:</b> ${lasercode}<br>
-           <b>ID:</b> ${id}<br>
+          `<b>時間:</b> ${time}<br>
+          <b>料餅厚度:</b> ${sm}<br>
+          <b>雷雕碼:</b> ${lasercode}<br>
+           <b>索引:</b> ${id}<br>
           ` +
           
           params
             .map(
               (p) =>
                 `${p.marker} ${p.seriesName}: ${
-                  ["Pressure", "Speed"].includes(p.seriesName)
+                  ["壓力", "速度"].includes(p.seriesName)
                     ? p.data.original ?? p.value[1]
                     : p.value[1]
                 }`
@@ -127,7 +127,7 @@ function buildChartOption(models) {
     },
     legend: {
       top: 0,
-      data: ["Position", "Pressure", "Speed"],
+      data: ["位置", "壓力", "速度"],
       textStyle: { fontSize: 20 },
     },
     toolbox: {
@@ -146,7 +146,7 @@ function buildChartOption(models) {
     },
     xAxis: {
       type: "time",
-      name: "Time",
+      name: "時間",
       nameTextStyle: { fontSize: 20, fontWeight: "bold" },
       splitLine: { show: true },
       axisLabel: { fontSize: 20, rotate: 30 },
@@ -167,7 +167,7 @@ function buildChartOption(models) {
     ],
     series: [
       {
-        name: "Position",
+        name: "位置",
         type: "line",
         smooth: true,
         showSymbol: false,
@@ -175,7 +175,7 @@ function buildChartOption(models) {
         data: posData, // already has null separator inside
       },
       {
-        name: "Pressure",
+        name: "壓力",
         type: "line",
         smooth: true,
         showSymbol: false,
@@ -192,7 +192,7 @@ function buildChartOption(models) {
         ),
       },
       {
-        name: "Speed",
+        name: "速度",
         type: "line",
         smooth: true,
         showSymbol: false,
@@ -247,7 +247,7 @@ function startCountdown(type) {
   if (!autoRefresh) return;
 
   countdownInterval = setInterval(() => {
-    countdownLabel.innerText = `Refreshing in: ${timeLeft}s`;
+    countdownLabel.innerText = `${timeLeft} 秒後自動刷新`;
     timeLeft--;
     if (timeLeft < 0) {
       loadData(type, dateFromEl.value, dateToEl.value);

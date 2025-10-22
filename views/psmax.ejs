@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/css/psmax.css" />
   </head>
   <body>
-    <h1>Max Pressure vs Max Speed (Latest 500 Shots)</h1>
+    <h1>最大速度與最大壓力圖</h1>
 
     <!-- Loading Spinner -->
     <%- include("partials/loading") %>
@@ -35,14 +35,14 @@
           <thead>
             <tr>
               <th></th>
-              <th>LCL</th>
-              <th>UCL</th>
+              <th>管制下限</th>
+              <th>管制上限</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><b>Speed</b></td>
+              <td><b>速度</b></td>
               <td>
                 <input
                   class="form-control"
@@ -64,11 +64,11 @@
                 rowspan="2"
                 style="text-align: center; vertical-align: middle"
               >
-                <button id="applyLimitsBtn">Apply to Chart</button>
+                <button id="applyLimitsBtn">更新圖表</button>
               </td>
             </tr>
             <tr>
-              <td><b>Pressure</b></td>
+              <td><b>壓力</b></td>
               <td>
                 <input
                   class="form-control"
@@ -95,11 +95,11 @@
       <table id="statsTable">
         <thead>
           <tr>
-            <th>Product</th>
-            <th>Status</th>
-            <th>Count</th>
-            <th>Total</th>
-            <th>Percent</th>
+            <th>產品</th>
+            <th>狀態</th>
+            <th>數量</th>
+            <th>總數</th>
+            <th>百分比(%)</th>
           </tr>
         </thead>
         <tbody></tbody>
