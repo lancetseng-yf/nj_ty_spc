@@ -11,15 +11,15 @@
     <script src="/libs/bootstrap/bootstrap.bundle.min.js"></script>
   </head>
   <body>
-    <h1>Diecasting Eigenvalue Chart (Latest 100 Shots)</h1>
+    <h1>壓鑄機曲線圖(單shot)</h1>
 
     <%- include("partials/loading") %>
 
     <div id="controls">
       <%- include("partials/_product-dropbox") %>
 
-      <button id="prevBtn">⬅ Previous</button>
-      <button id="nextBtn">Next ➡</button>
+      <button id="prevBtn">⬅ 上一個</button>
+      <button id="nextBtn">下一個 ➡</button>
       <%- include("partials/_countdown-control") %> <%-
       include("partials/_auto-carousel-checkbox") %>
     </div>
@@ -28,9 +28,9 @@
       <%- include("partials/_datetimepicker") %>
 
       <div id="sn-control" class="form-group">
-        <label for="snInput">SN:</label>
-        <input type="text" id="snInput" placeholder="Enter Lasercode" />
-        <button type="submit" id="snSearchBtn" class="btn">Search</button>
+        <label for="snInput">雷雕碼:</label>
+        <input type="text" id="snInput" placeholder="輸入雷雕瑪" />
+        <button type="submit" id="snSearchBtn" class="btn">查詢</button>
       </div>
     </div>
 

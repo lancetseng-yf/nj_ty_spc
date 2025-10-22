@@ -34,6 +34,12 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentIndex = 0;
   let currentType = productSelect.value || null;
 
+  const scaleFactors = {
+    factor15: 15,
+    factor45: 45,
+    factor65: 65,
+  };
+
   // =========================
   // 🔹 Utilities
   // =========================
@@ -42,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!autoRefresh) return;
 
     countdownInterval = setInterval(() => {
-      countdownEl.innerText = `Refreshing in: ${timeLeft}s`;
+      countdownEl.innerText = `${timeLeft} 秒後自動刷新`;
       timeLeft--;
 
       if (timeLeft < 0) {
@@ -74,22 +80,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const series500 = [
       {
-        name: "Pressure",
+        name: "壓力",
         type: "line",
         showSymbol: false,
-        data: (model.pressure || []).map((v, i) => [i * step500, v * 15]),
+        data: (model.pressure || []).map((v, i) => [
+          i * step500,
+          v * scaleFactors.factor15,
+        ]),
       },
       {
-        name: "Position",
+        name: "位置",
         type: "line",
         showSymbol: false,
         data: (model.position || []).map((v, i) => [i * step500, v]),
       },
       {
-        name: "Speed",
+        name: "速度",
         type: "line",
         showSymbol: false,
-        data: (model.speed || []).map((v, i) => [i * step500, v * 15]),
+        data: (model.speed || []).map((v, i) => [
+          i * step500,
+          v * scaleFactors.factor15,
+        ]),
       },
     ];
 
@@ -98,19 +110,28 @@ document.addEventListener("DOMContentLoaded", () => {
         name: "伺服阀控制曲线",
         type: "line",
         showSymbol: false,
-        data: (model.control || []).map((v, i) => [i * step250, v]),
+        data: (model.control || []).map((v, i) => [
+          i * step250,
+          v * scaleFactors.factor45,
+        ]),
       },
       {
         name: "伺服阀芯反馈曲线",
         type: "line",
         showSymbol: false,
-        data: (model.feedback || []).map((v, i) => [i * step250, v]),
+        data: (model.feedback || []).map((v, i) => [
+          i * step250,
+          v * scaleFactors.factor45,
+        ]),
       },
       {
         name: "儲能n2壓力曲線",
         type: "line",
         showSymbol: false,
-        data: (model.storage_pressure_n2 || []).map((v, i) => [i * step250, v]),
+        data: (model.storage_pressure_n2 || []).map((v, i) => [
+          i * step250,
+          v * scaleFactors.factor45,
+        ]),
       },
       {
         name: "增壓n2壓力曲線",
@@ -118,14 +139,17 @@ document.addEventListener("DOMContentLoaded", () => {
         showSymbol: false,
         data: (model.pressurization_pressure_n2 || []).map((v, i) => [
           i * step250,
-          v,
+          v * scaleFactors.factor45,
         ]),
       },
       {
         name: "系統壓力曲線",
         type: "line",
         showSymbol: false,
-        data: (model.system_pressure || []).map((v, i) => [i * step250, v]),
+        data: (model.system_pressure || []).map((v, i) => [
+          i * step250,
+          v * scaleFactors.factor45,
+        ]),
       },
     ];
 
@@ -145,24 +169,49 @@ document.addEventListener("DOMContentLoaded", () => {
       tooltip: {
         trigger: "axis",
         formatter: function (params) {
-          let lasercode = model.lasercode || "N/A";
-          let time = params[0].data[0];
-          let tooltipText = `Time: ${time.toFixed(3)}s<br/>Biscuit: ${
-            model.sm
-          }<br/>
-          Laser Code: ${lasercode}<br/>`;
+          const lasercode = model.lasercode || "N/A";
+          const time = params[0].data[0];
+          let tooltipText = `
+      <b>時間:</b> ${time.toFixed(3)}s<br/>
+      <b>料餅厚度:</b> ${model.sm}<br/>
+      <b>雷雕碼:</b> ${lasercode}<br/>
+    `;
 
           params.forEach((p) => {
-            let displayValue = ["Pressure", "Speed"].includes(p.seriesName)
-              ? p.data[1] / 15
-              : p.data[1];
-            tooltipText += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color}"></span>${p.seriesName}: ${displayValue}<br/>`;
+            let value = p.data[1];
+            // Apply scaling depending on series name
+            if (["Pressure", "Speed"].includes(p.seriesName)) {
+              value = value / scaleFactors.factor15;
+            } else if (
+              [
+                "伺服阀控制曲线",
+                "伺服阀芯反馈曲线",
+                "儲能n2壓力曲線",
+                "增壓n2壓力曲線",
+                "系統壓力曲線",
+              ].includes(p.seriesName)
+            ) {
+              value = value / scaleFactors.factor45;
+            }
+
+            tooltipText += `
+        <span style="display:inline-block;margin-right:5px;
+        border-radius:50%;width:10px;height:10px;
+        background-color:${p.color}"></span>
+        ${p.seriesName}: ${value.toFixed(2)}<br/>
+      `;
           });
 
+          // Add vacuum pressure info
           for (let i = 1; i <= 8; i++) {
-            tooltipText += `真空度${i}: ${model["vacuum_pressure" + i]}<br/>`;
+            tooltipText += `真空度${i}: ${
+              model["vacuum_pressure" + i] ?? "N/A"
+            }<br/>`;
           }
-          tooltipText += `機邊爐鋁湯溫度: ${model.lv}<br/>`;
+
+          // Add aluminum temperature
+          tooltipText += `機邊爐鋁湯溫度: ${model.lv ?? "N/A"}<br/>`;
+
           return tooltipText;
         },
       },
@@ -186,8 +235,8 @@ document.addEventListener("DOMContentLoaded", () => {
         min: 0,
         max: duration,
         interval: 1,
-        axisLabel: { fontSize: 20, formatter: "{value}s" },
-        name: "Time(s)",
+        axisLabel: { fontSize: 20, formatter: "{value}秒" },
+        name: "時間(s)",
         nameGap: 50,
         nameTextStyle: { fontSize: 20, fontWeight: "bold" },
       },
@@ -288,8 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchData(productSelect.value, dateFrom, dateTo);
   });
 
-  
-   submitSnBtn.addEventListener("click", (e) => {
+  submitSnBtn.addEventListener("click", (e) => {
     e.preventDefault();
     const sn = snEl.value;
     autoRefresh = false;

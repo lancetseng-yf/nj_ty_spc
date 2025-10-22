@@ -1,4 +1,4 @@
-      <label for="productSelect">Select Product:</label>
+      <label for="productSelect">產品:</label>
       <select id="productSelect">
         <% ["","LL","LR","ML","MR"].forEach(p => { %>
           <option value="<%= p %>" <%= p === type ? "selected" : "" %>><%= p %></option>
