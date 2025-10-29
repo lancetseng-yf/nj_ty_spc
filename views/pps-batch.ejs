@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>PPS Batch - Diecasting Data</title>
+    <title><%= __('pps_batch_title') %></title>
     <script src="/libs/echarts/echarts.min.js"></script>
    <link rel="stylesheet" href="/libs/bootstrap/bootstrap.min.css" />
      <link rel="stylesheet" href="/libs/material-icons/material-icons.css" />
@@ -11,7 +11,7 @@
   </head>
   <body>
     <div class="controls">
-      <h1 class="mb-4">壓鑄機(壓力、速度、位置)曲線圖(多shot)</h1>
+      <h1 class="mb-4"><%= __('pps_batch_chart_label') %></h1>
 
       <!-- Dropdown -->
       <div id="controls">
@@ -28,6 +28,19 @@
 
     <!-- Chart -->
     <div id="chart"></div>
+
+    <script>
+         var i18nLabels = {
+        time: "<%= __('time') %>",
+        thickness: "<%= __('thickness') %>",
+        index: "<%= __('index') %>",
+        refresh_time_label: "<%= __('refresh_time_label') %>",
+        lasercode: "<%= __('lasercode') %>",
+        pressure: "<%= __('pressure') %>",
+        speed: "<%= __('speed') %>",
+        position: "<%= __('position') %>",
+      };
+      </script>
 
  <script src="/js/pps-batch.js"></script>
 

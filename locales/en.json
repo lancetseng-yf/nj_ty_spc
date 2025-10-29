@@ -13,5 +13,11 @@
 	"above": "Above UCL",
 	"index": "Index",
 	"refresh_time_label": "seconds until auto refresh",
-	"": ""
+
+	"pps_batch_title": "Diecasting Machine Chart (multi-shot)",
+	"pps_batch_chart_label": "Diecasting Machine Chart (multi-shot)",
+	"lasercode": "Lasercode",
+	"pressure": "Pressure",
+	"speed": "Speed",
+	"position": "Position"
 }

@@ -35,8 +35,8 @@ function parseDateAsUTC(dateString) {
   const date = new Date(isoString);
   // Check if the date is valid after parsing
   if (isNaN(date.getTime())) {
-      console.error("Failed to parse date string as UTC:", dateString);
-      return new Date(); // Fallback for invalid formats
+    console.error("Failed to parse date string as UTC:", dateString);
+    return new Date(); // Fallback for invalid formats
   }
   return date;
 }
@@ -107,17 +107,18 @@ function buildChartOption(models) {
         const id = model?.diecasting_eigenvalue_data_id || "N/A";
 
         return (
-          `<b>時間:</b> ${time}<br>
-          <b>料餅厚度:</b> ${sm}<br>
-          <b>雷雕碼:</b> ${lasercode}<br>
-           <b>索引:</b> ${id}<br>
+          `<b>${i18nLabels.time}:</b> ${time}<br>
+          <b>${i18nLabels.thickness}:</b> ${sm}<br>
+          <b>${i18nLabels.lasercode}:</b> ${lasercode}<br>
+           <b>${i18nLabels.index}:</b> ${id}<br>
           ` +
-          
           params
             .map(
               (p) =>
                 `${p.marker} ${p.seriesName}: ${
-                  ["壓力", "速度"].includes(p.seriesName)
+                  [`${i18nLabels.pressure}`, `${i18nLabels.speed}`].includes(
+                    p.seriesName
+                  )
                     ? p.data.original ?? p.value[1]
                     : p.value[1]
                 }`
@@ -128,7 +129,11 @@ function buildChartOption(models) {
     },
     legend: {
       top: 0,
-      data: ["位置", "壓力", "速度"],
+      data: [
+        `${i18nLabels.position}`,
+        `${i18nLabels.pressure}`,
+        `${i18nLabels.speed}`,
+      ],
       textStyle: { fontSize: 20 },
     },
     toolbox: {
@@ -147,7 +152,7 @@ function buildChartOption(models) {
     },
     xAxis: {
       type: "time",
-      name: "時間",
+      name: `${i18nLabels.time}`,
       nameTextStyle: { fontSize: 20, fontWeight: "bold" },
       splitLine: { show: true },
       axisLabel: { fontSize: 20, rotate: 30 },
@@ -168,7 +173,7 @@ function buildChartOption(models) {
     ],
     series: [
       {
-        name: "位置",
+        name: `${i18nLabels.position}`,
         type: "line",
         smooth: true,
         showSymbol: false,
@@ -176,7 +181,7 @@ function buildChartOption(models) {
         data: posData, // already has null separator inside
       },
       {
-        name: "壓力",
+        name: `${i18nLabels.pressure}`,
         type: "line",
         smooth: true,
         showSymbol: false,
@@ -193,7 +198,7 @@ function buildChartOption(models) {
         ),
       },
       {
-        name: "速度",
+        name: `${i18nLabels.speed}`,
         type: "line",
         smooth: true,
         showSymbol: false,
@@ -248,7 +253,7 @@ function startCountdown(type) {
   if (!autoRefresh) return;
 
   countdownInterval = setInterval(() => {
-    countdownLabel.innerText = `${timeLeft} 秒後自動刷新`;
+    countdownLabel.innerText = `${timeLeft} ${i18nLabels.refresh_time_label}`;
     timeLeft--;
     if (timeLeft < 0) {
       loadData(type, dateFromEl.value, dateToEl.value);

@@ -11,6 +11,13 @@
   "normal": "正常",
   "below": "低于管制下限",
   "above": "高于管制上限",
-  "index":"索引",
-  "refresh_time_label":"秒后自动刷新"
+  "index": "索引",
+  "refresh_time_label": "秒后自动刷新",
+
+  "pps_batch_title": "压铸机曲线图(多shot)",
+  "pps_batch_chart_label": "压铸机(压力、速度、位置)曲线图(多shot)",
+  "lasercode": "雷雕码",
+  "pressure": "压力",
+  "speed": "速度",
+  "position": "位置"
 }
