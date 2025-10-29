@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!autoRefresh) return;
 
     countdownInterval = setInterval(() => {
-      countdownEl.innerText = `${timeLeft} 秒後自動刷新`;
+      countdownEl.innerText = `${timeLeft} ${i18nLabels.refresh_time_label}`;
       timeLeft--;
 
       if (timeLeft < 0) {
@@ -87,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const series500 = [
       {
-        name: "壓力",
+        name: `${i18nLabels.pressure}`,
         type: "line",
         showSymbol: false,
         data: (model.pressure || []).map((v, i) => [
@@ -96,13 +96,13 @@ document.addEventListener("DOMContentLoaded", () => {
         ]),
       },
       {
-        name: "位置",
+        name: `${i18nLabels.position}`,
         type: "line",
         showSymbol: false,
         data: (model.position || []).map((v, i) => [i * step500, v]),
       },
       {
-        name: "速度",
+        name: `${i18nLabels.speed}`,
         type: "line",
         showSymbol: false,
         data: (model.speed || []).map((v, i) => [
@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const series250 = [
       {
-        name: "伺服阀控制曲线",
+        name: `${i18nLabels.series_servo_valve_control}`,
         type: "line",
         showSymbol: false,
         data: (model.control || []).map((v, i) => [
@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ]),
       },
       {
-        name: "伺服阀芯反馈曲线",
+        name: `${i18nLabels.series_servo_valve_feedback}`,
         type: "line",
         showSymbol: false,
         data: (model.feedback || []).map((v, i) => [
@@ -132,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ]),
       },
       {
-        name: "儲能n2壓力曲線",
+        name: `${i18nLabels.series_storage_pressure_n2}`,
         type: "line",
         showSymbol: false,
         data: (model.storage_pressure_n2 || []).map((v, i) => [
@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ]),
       },
       {
-        name: "增壓n2壓力曲線",
+        name: `${i18nLabels.series_pressurization_pressure_n2}`,
         type: "line",
         showSymbol: false,
         data: (model.pressurization_pressure_n2 || []).map((v, i) => [
@@ -150,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ]),
       },
       {
-        name: "系統壓力曲線",
+        name: `${i18nLabels.series_system_pressure}`,
         type: "line",
         showSymbol: false,
         data: (model.system_pressure || []).map((v, i) => [
@@ -183,23 +183,36 @@ document.addEventListener("DOMContentLoaded", () => {
           const lasercode = model.lasercode || "N/A";
           let time = params[0].data[0];
           let tooltipText = `
-      <b>時間:</b> ${time.toFixed(3)}<br/>
-      <b>料餅厚度:</b> ${model.sm}<br/>
-      <b>雷雕碼:</b> ${lasercode}<br/>
+      <b>${i18nLabels.time}:</b> ${time.toFixed(3)}<br/>
+      <b>${i18nLabels.thickness}料餅厚度:</b> ${model.sm}<br/>
+      <b>${i18nLabels.lasercode}雷雕碼:</b> ${lasercode}<br/>
     `;
 
           params.forEach((p) => {
             let value = p.data[1];
             // Apply scaling depending on sries name
-            if (["壓力", "速度"].includes(p.seriesName)) {
+            if (
+              [`${i18nLabels.pressure}`, `${i18nLabels.speed}`].includes(
+                p.seriesName
+              )
+            ) {
               value = value / scaleFactors.factor15;
             } else if (
               [
-                "伺服阀控制曲线",
-                "伺服阀芯反馈曲线",
-                "儲能n2壓力曲線",
-                "增壓n2壓力曲線",
-                "系統壓力曲線",
+                // Original: "伺服阀控制曲线",
+                i18nLabels.series_servo_valve_control,
+
+                // Original: "伺服阀芯反馈曲线",
+                i18nLabels.series_servo_valve_feedback,
+
+                // Original: "儲能n2壓力曲線",
+                i18nLabels.series_storage_pressure_n2,
+
+                // Original: "增壓n2壓力曲線",
+                i18nLabels.series_pressurization_pressure_n2,
+
+                // Original: "系統壓力曲線",
+                i18nLabels.series_system_pressure,
               ].includes(p.seriesName)
             ) {
               value = value / scaleFactors.factor45;
@@ -215,13 +228,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // Add vacuum pressure info
           for (let i = 1; i <= 8; i++) {
-            tooltipText += `真空度${i}: ${
+            tooltipText += `${i18nLabels.tooltip_vacuum_pressure_label}${i}: ${
               model["vacuum_pressure" + i] ?? "N/A"
             }<br/>`;
           }
 
           // Add aluminum temperature
-          tooltipText += `機邊爐鋁湯溫度: ${model.lv ?? "N/A"}<br/>`;
+          tooltipText += `機邊爐鋁湯溫度: ${model.lv ?? "N/A"}<br/>`; //here
 
           return tooltipText;
         },
