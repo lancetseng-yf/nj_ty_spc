@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Max Pressure vs Max Speed</title>
+    <title><%= __('speed_and_pressure_max_title') %></title>
 
     <link rel="stylesheet" href="/libs/nouislider/nouislider.min.css" />
     <script src="/libs/echarts/echarts.min.js"></script>
@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/css/psmax.css" />
   </head>
   <body>
-    <h1>最大速度與最大壓力圖</h1>
+    <h1><%= __('speed_and_pressure_max_chart_label') %></h1>
 
     <!-- Loading Spinner -->
     <%- include("partials/loading") %>
@@ -35,14 +35,14 @@
           <thead>
             <tr>
               <th></th>
-              <th>管制下限</th>
-              <th>管制上限</th>
+              <th><%= __('lower_limit') %></th>
+              <th><%= __('upper_limit') %></th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><b>速度</b></td>
+              <td><b><%= __('max_speed') %></b></td>
               <td>
                 <input
                   class="form-control"
@@ -64,11 +64,11 @@
                 rowspan="2"
                 style="text-align: center; vertical-align: middle"
               >
-                <button id="applyLimitsBtn">更新圖表</button>
+                <button id="applyLimitsBtn"><%= __('update_chart') %></button>
               </td>
             </tr>
             <tr>
-              <td><b>壓力</b></td>
+              <td><b><%= __('max_pressure') %></b></td>
               <td>
                 <input
                   class="form-control"
@@ -95,11 +95,11 @@
       <table id="statsTable">
         <thead>
           <tr>
-            <th>產品</th>
-            <th>狀態</th>
-            <th>數量</th>
-            <th>總數</th>
-            <th>百分比(%)</th>
+            <th><%= __('table_header_product') %></th>
+            <th><%= __('table_header_status') %></th>
+            <th><%= __('table_header_quantity') %></th>
+            <th><%= __('table_header_total') %></th>
+            <th><%= __('table_header_percentage') %></th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -109,6 +109,18 @@
     <div id="chart"></div>
     <div id="rangeLabel"></div>
     <div id="timeSlider"></div>
+
+    <script>
+      var i18nLabels = {
+        refresh_time_label: "<%= __('refresh_time_label') %>",
+        index: "<%= __('index') %>",
+        time: "<%= __('time') %>",
+        max_speed: "<%= __('max_speed') %>",
+        max_pressure: "<%= __('max_pressure') %>",
+        warm_up: "<%= __('warm_up') %>",
+        normal_production: "<%= __('normal_production') %>",
+      };
+    </script>
 
     <script src="/js/psmax.js"></script>
   </body>

@@ -3,7 +3,7 @@
   "biscuit_chart_label": "料餅厚度圖",
   "lower_limit": "管制下限",
   "upper_limit": "管制上限",
-  "mean": "平均數",
+  "mean": "平均值",
   "update_chart": "更新圖表",
   "time": "時間",
   "thickness_y_label": "料餅厚度(mm)",
@@ -34,5 +34,20 @@
   "series_pressurization_pressure_n2": "增壓n2壓力曲線",
   "series_system_pressure": "系統壓力曲線",
   "tooltip_vacuum_pressure_label": "真空度",
-  "tooltip_aluminum_melt_temp": "機邊爐鋁湯溫度"
+  "tooltip_aluminum_melt_temp": "機邊爐鋁湯溫度",
+  "time_sec": "時間(秒)",
+  "second": "秒",
+
+  "speed_and_pressure_max_title": "最大速度與最大壓力圖",
+  "speed_and_pressure_max_chart_label": "最大速度與最大壓力圖",
+  "table_header_product": "產品",
+  "table_header_status": "狀態",
+  "table_header_quantity": "數量",
+  "table_header_total": "總數",
+  "table_header_percentage": "百分比(%)",
+
+  "max_speed": "最大速度",
+  "max_pressure": "最大壓力",
+  "warm_up": "預熱",
+  "normal_production": "正常生產"
 }

@@ -184,8 +184,8 @@ document.addEventListener("DOMContentLoaded", () => {
           let time = params[0].data[0];
           let tooltipText = `
       <b>${i18nLabels.time}:</b> ${time.toFixed(3)}<br/>
-      <b>${i18nLabels.thickness}料餅厚度:</b> ${model.sm}<br/>
-      <b>${i18nLabels.lasercode}雷雕碼:</b> ${lasercode}<br/>
+      <b>${i18nLabels.thickness}:</b> ${model.sm}<br/>
+      <b>${i18nLabels.lasercode}:</b> ${lasercode}<br/>
     `;
 
           params.forEach((p) => {
@@ -234,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
           // Add aluminum temperature
-          tooltipText += `機邊爐鋁湯溫度: ${model.lv ?? "N/A"}<br/>`; //here
+          tooltipText += `${i18nLabels.tooltip_aluminum_melt_temp}: ${model.lv ?? "N/A"}<br/>`;
 
           return tooltipText;
         },
@@ -259,8 +259,8 @@ document.addEventListener("DOMContentLoaded", () => {
         min: 0,
         max: duration,
         interval: 1,
-        axisLabel: { fontSize: 20, formatter: "{value}秒" },
-        name: "時間(s)",
+        axisLabel: { fontSize: 20, formatter: `{value}${i18nLabels.second}` },
+        name: `${i18nLabels.time_sec}`,
         nameGap: 50,
         nameTextStyle: { fontSize: 20, fontWeight: "bold" },
       },

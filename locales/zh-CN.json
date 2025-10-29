@@ -19,5 +19,35 @@
   "lasercode": "雷雕码",
   "pressure": "压力",
   "speed": "速度",
-  "position": "位置"
+  "position": "位置",
+
+  "pps_single_title": "压铸机曲线图(单shot)",
+  "pps_single_chart_label": "压铸机(压力、速度、位置)曲线图(单shot)",
+  "next": "下一个",
+  "previous": "上一个",
+  "query": "查询",
+  "input_tips_sn": "输入雷雕玛",
+
+  "series_servo_valve_control": "伺服阀控制曲线",
+  "series_servo_valve_feedback": "伺服阀芯反馈曲线",
+  "series_storage_pressure_n2": "储能n2压力曲线",
+  "series_pressurization_pressure_n2": "增压n2压力曲线",
+  "series_system_pressure": "系统压力曲线",
+  "tooltip_vacuum_pressure_label": "真空度",
+  "tooltip_aluminum_melt_temp": "机边炉铝汤温度",
+  "time_sec": "时间(秒)",
+  "second":"秒",
+
+  "speed_and_pressure_max_title": "最大速度与最大压力图",
+  "speed_and_pressure_max_chart_label": "最大速度与最大压力图",
+  "table_header_product": "产品",
+  "table_header_status": "状态",
+  "table_header_quantity": "数量",
+  "table_header_total": "总数",
+  "table_header_percentage": "百分比(%)",
+
+  "max_speed": "最大速度",
+  "max_pressure": "最大压力",
+  "warm_up": "预热",
+  "normal_production": "正常生产"
 }

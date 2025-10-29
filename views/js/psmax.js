@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     countdownInterval = setInterval(() => {
       const countdownLabel = document.getElementById("countdown");
       if (countdownLabel)
-        countdownLabel.textContent = `${timeLeft} 秒後自動刷新`;
+        countdownLabel.textContent = `${timeLeft} ${i18nLabels.refresh_time_label}`;
       timeLeft--;
       if (timeLeft < 0) {
         fetchData(currentType);
@@ -121,9 +121,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!scatterData.length) {
       chart.clear();
       if (statsTableBody)
-        statsTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#888;">無資料</td></tr>`;
+        statsTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#888;">No Data</td></tr>`;
       if (slider && slider.noUiSlider) slider.noUiSlider.destroy();
-      if (rangeLabel) rangeLabel.textContent = "時間: N/A";
+      if (rangeLabel) rangeLabel.textContent = `${i18nLabels.time}: N/A`;
       return;
     }
 
@@ -145,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
     slider.noUiSlider.on("update", () => {
       const [from, to] = slider.noUiSlider.get().map(Number);
       if (rangeLabel)
-        rangeLabel.textContent = `時間: ${formatTime(from)} ~ ${formatTime(
+        rangeLabel.textContent = `${i18nLabels.time}: ${formatTime(from)} ~ ${formatTime(
           to
         )}`;
       refreshChart();
@@ -213,16 +213,16 @@ document.addEventListener("DOMContentLoaded", () => {
         trigger: "item",
         formatter: (params) => {
           const [timestamp, speed, pressure, id] = params.data;
-          return `<b>索引:</b> ${id}<br/><b>時間:</b> ${formatTime(
+          return `<b>${i18nLabels.index}:</b> ${id}<br/><b>時間:</b> ${formatTime(
             timestamp
-          )}<br/><b>最大速度:</b> ${speed.toFixed(
+          )}<br/><b>${i18nLabels.max_speed}:</b> ${speed.toFixed(
             2
-          )}<br/><b最大壓力:</b> ${pressure.toFixed(2)}`;
+          )}<br/><b>${i18nLabels.max_pressure}:</b> ${pressure.toFixed(2)}`;
         },
       },
       xAxis: {
         type: "value",
-        name: "最大速度(cm/s)",
+        name: `${i18nLabels.max_speed}(cm/s)`,
         min: 0,
         max: xMax,
         nameLocation: "center",
@@ -232,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       yAxis: {
         type: "value",
-        name: "最大壓力(bar)",
+        name: `${i18nLabels.max_pressure}(bar)`,
         min: 0,
         max: yMax,
         nameLocation: "center",
@@ -290,12 +290,12 @@ document.addEventListener("DOMContentLoaded", () => {
     statsTableBody.innerHTML = `
       <tr><td>${
         p.productName
-      }</td><td>預熱(Warm-Up)</td><td>${ngCount}</td><td>${total}</td><td>${
+      }</td><td>${i18nLabels.warm_up}</td><td>${ngCount}</td><td>${total}</td><td>${
       total ? ((ngCount / total) * 100).toFixed(2) + "%" : "0.00%"
     }</td></tr>
       <tr><td>${
         p.productName
-      }</td><td>正常(Normal)</td><td>${okCount}</td><td>${total}</td><td>${
+      }</td><td>${i18nLabels.normal_production}</td><td>${okCount}</td><td>${total}</td><td>${
       total ? ((okCount / total) * 100).toFixed(2) + "%" : "0.00%"
     }</td></tr>
     `;
