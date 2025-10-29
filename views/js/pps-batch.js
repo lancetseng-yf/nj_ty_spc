@@ -14,6 +14,7 @@ let refreshTime = 105; // seconds
 let timeLeft = refreshTime;
 let countdownInterval;
 let autoRefresh = true;
+const initialType = productSelect.value || "<%= type %>";
 
 // --- Utility ---
 function fmtDateYMDHMS(d) {
@@ -290,5 +291,6 @@ if (submitBtn) {
 }
 
 // --- Initial load ---
-loadData("<%= type %>");
+loadData(initialType);
+console.log("Initial type:", initialType);
 window.addEventListener("resize", () => chart.resize());

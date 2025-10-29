@@ -120,7 +120,8 @@ async function fetchPpsData(
 
     if (sn) {
       whereCondition.lasercode = { [Op.like]: `%${sn}%` };
-    } else {
+    }
+    if (type) {
       whereCondition.lasercode = { [Op.like]: `%${lasercode}%` };
     }
 

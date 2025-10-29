@@ -162,7 +162,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return {
       title: {
-        text: `${model.type}_${model.lasercode || "N/A"}_${new Date(model.dt).toLocaleString()}`,
+        text: `${model.type}_${model.lasercode || "N/A"}_${new Date(
+          model.dt
+        ).toLocaleString([], {
+          hour12: false, // ✅ 24-hour format only
+        })}`,
         left: "center",
         top: 10,
         textStyle: { fontSize: 24 },
