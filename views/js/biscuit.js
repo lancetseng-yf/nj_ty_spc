@@ -59,7 +59,14 @@ const buildChartOption = (data, config) => {
 
   return {
     legend: {
-      data: ["正常", "低於管制下限", "高於管制上限", "平均值", "管制上限", "管制下限"],
+      data: [
+        i18nLabels.normal,
+        i18nLabels.below,
+        i18nLabels.above,
+        i18nLabels.mean,
+        i18nLabels.upper_limit,
+        i18nLabels.lower_limit,
+      ],
       top: 10,
       textStyle: { fontSize: 16 },
     },
@@ -67,15 +74,17 @@ const buildChartOption = (data, config) => {
       trigger: "item",
       formatter: (p) => {
         if (p.componentType === "markLine") return `${p.name}: ${p.value}`;
-        return `<b>索引:</b> ${p.data.id}<br/><b>時間:</b> ${formatDateTime(
-          p.value[0]
-        )}<br/><b>料餅厚度:</b> ${p.value[1]}`;
+        return `<b>${i18nLabels.index}:</b> ${p.data.id}<br/><b>${
+          i18nLabels.time
+        }:</b> ${formatDateTime(p.value[0])}<br/><b>${
+          i18nLabels.thickness
+        }:</b> ${p.value[1]}`;
       },
     },
     dataZoom: [{ type: "inside", start: 0, end: 100 }],
     xAxis: {
       type: "time",
-      name: "時間",
+      name: `${i18nLabels.time}`,
       nameLocation: "center",
       nameGap: 50,
       nameTextStyle: { fontSize: 20, fontWeight: "bold" },
@@ -90,7 +99,7 @@ const buildChartOption = (data, config) => {
     },
     yAxis: {
       type: "value",
-      name: "料餅厚度(mm)",
+      name: `${i18nLabels.thickness_y_label}`,
       min: minY,
       max: maxY,
       nameLocation: "center",
@@ -99,28 +108,28 @@ const buildChartOption = (data, config) => {
     },
     series: [
       {
-        name: "正常",
+        name: `${i18nLabels.normal}`,
         type: "scatter",
         symbolSize: 12,
         data: normal,
         itemStyle: { color: "blue" },
       },
       {
-        name: "低於管制下限",
+        name: `${i18nLabels.below}`,
         type: "scatter",
         symbolSize: 12,
         data: below,
         itemStyle: { color: "orange" },
       },
       {
-        name: "高於管制上限",
+        name: `${i18nLabels.above}`,
         type: "scatter",
         symbolSize: 12,
         data: above,
         itemStyle: { color: "red" },
       },
       {
-        name: "平均值",
+        name: `${i18nLabels.mean}`,
         type: "line",
         data: [],
         markLine: {
@@ -131,7 +140,7 @@ const buildChartOption = (data, config) => {
         itemStyle: { color: "green" },
       },
       {
-        name: "管制上限",
+        name: `${i18nLabels.upper_limit}`,
         type: "line",
         data: [],
         markLine: {
@@ -142,7 +151,7 @@ const buildChartOption = (data, config) => {
         itemStyle: { color: "red" },
       },
       {
-        name: "管制下限",
+        name: `${i18nLabels.lower_limit}`,
         type: "line",
         data: [],
         markLine: {
@@ -222,7 +231,7 @@ if (typeof refreshManager === "undefined") {
         this.timeLeft--;
         document.getElementById(
           "countdown"
-        ).innerText = `${this.timeLeft} 秒後自動刷新`;
+        ).innerText = `${this.timeLeft} ${i18nLabels.refresh_time_label}`;
         if (this.timeLeft <= 0) {
           fetchData(currentType);
           this.timeLeft = this.refreshTime;

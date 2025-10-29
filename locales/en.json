@@ -1,1 +1,17 @@
-{ "Welcome": "Welcome to our website!" }
+{
+	"biscuit_title": "Biscuit Thickness",
+	"biscuit_chart_label": "Biscuit Thickness Chart",
+	"lower_limit": "LCL",
+	"upper_limit": "UCL",
+	"mean": "Mean",
+	"update_chart": "Update Chart",
+	"time": "Time",
+	"thickness_y_label": "Thickness (mm)",
+	"thickness": "Biscuit Thickness",
+	"normal": "Normal",
+	"below": "Below LCL",
+	"above": "Above UCL",
+	"index": "Index",
+	"refresh_time_label": "seconds until auto refresh",
+	"": ""
+}

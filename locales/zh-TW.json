@@ -1,1 +1,17 @@
-{ "Welcome": "歡迎光臨" }
+{
+	"biscuit_title": "料餅厚度",
+	"biscuit_chart_label": "料餅厚度圖",
+	"lower_limit": "管制下限",
+	"upper_limit": "管制上限",
+	"mean": "平均數",
+	"update_chart": "更新圖表",
+	"time": "時間",
+	"thickness_y_label": "料餅厚度(mm)",
+	"thickness": "料餅厚度",
+	"normal": "正常",
+	"below": "低於管制下限",
+	"above": "高於管制上限",
+	"index": "索引",
+	"refresh_time_label": "秒後自動刷新",
+	"": ""
+}
