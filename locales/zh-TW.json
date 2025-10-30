@@ -49,5 +49,14 @@
   "max_speed": "最大速度",
   "max_pressure": "最大壓力",
   "warm_up": "預熱",
-  "normal_production": "正常生產"
+  "normal_production": "正常生產",
+
+  "kanban_mode":"看板模式",
+  "clear":"清除",
+  "to":"到",
+
+  "hide_controls": "隱藏控制項",
+  "product": "產品",
+
+  "data_loading":"資料載入中..."
 }
