@@ -1,11 +1,21 @@
 <!DOCTYPE html>
 <html lang="<%= locale %>">
-<head>
-  <meta charset="UTF-8">
-  <title>Home</title>
-</head>
-<body>
-  <h1><%= __('Welcome') %></h1>
- 
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Home</title>
+    <link rel="stylesheet" href="/libs/bootstrap/bootstrap.min.css" />
+  </head>
+  <body class="p-3">
+    <h1><%= __('Welcome') %></h1>
+
+    <div><%- include("partials/_helper-control") %></div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var btnShowHelper = document.getElementById("btn_show_helper");
+
+        btnShowHelper.dataset.slide = "pps-batch";
+      });
+    </script>
+  </body>
 </html>

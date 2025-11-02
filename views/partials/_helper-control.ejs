@@ -1,0 +1,65 @@
+<div>
+  <button id="btn_show_helper" class="btn btn-primary">Helper</button>
+</div>
+
+<!-- ✅ 使用 modal-xl 讓視窗更大 -->
+<div
+  class="modal fade"
+  id="myModal"
+  tabindex="-1"
+  aria-labelledby="myModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <!-- 包含部分模板 -->
+      <%- include("_helper") %>
+    </div>
+  </div>
+</div>
+
+<script src="/libs/bootstrap/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var btnShowHelper = document.getElementById("btn_show_helper");
+    var myModalEl = document.getElementById("myModal");
+    var modal = new bootstrap.Modal(myModalEl);
+    var helperSlide = document.getElementById("helper_slide");
+
+    btnShowHelper.addEventListener("click", function () {
+      var slideTo = btnShowHelper.dataset.slide;
+      switch (slideTo) {
+        case "pps-single":
+          helperSlide.innerHTML = `
+            <div class="carousel-item active">
+            <img src="/images/pps-single/img1.jpg" class="d-block w-100" alt="...">
+            </div>
+            <div class="carousel-item">
+            <img src="/images/pps-single/img2.jpg" class="d-block w-100" alt="...">
+            </div>
+            <div class="carousel-item">
+            <img src="/images/pps-single/img3.jpg" class="d-block w-100" alt="...">
+            </div>`;
+          break;
+        case "pps-batch":
+          helperSlide.innerHTML = `
+            <div class="carousel-item active">
+            <img src="/images/pps-batch/img1.jpg" class="d-block w-100" alt="...">
+            </div>
+            <div class="carousel-item">
+            <img src="/images/pps-batch/img2.jpg" class="d-block w-100" alt="...">
+            </div>
+           `;
+          break;
+        case "contact":
+          break;
+      }
+
+      modal.show();
+    });
+
+    myModalEl.addEventListener("hidden.bs.modal", function () {
+      console.log("Modal 已關閉");
+    });
+  });
+</script>
