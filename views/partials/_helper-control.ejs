@@ -1,13 +1,15 @@
-<div>
-  <button id="btn_show_helper" class="btn btn-primary">Helper</button>
-</div>
 
+<span>
+  <button id="showHelperBtn" class="btn">
+    <span class="material-icons">help</span>
+  </button>
+</span>
 <!-- ✅ 使用 modal-xl 讓視窗更大 -->
 <div
   class="modal fade"
-  id="myModal"
+  id="helperModal"
   tabindex="-1"
-  aria-labelledby="myModalLabel"
+  aria-labelledby="helperModalLabel"
   aria-hidden="true"
 >
   <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -21,10 +23,10 @@
 <script src="/libs/bootstrap/bootstrap.bundle.min.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    var btnShowHelper = document.getElementById("btn_show_helper");
-    var myModalEl = document.getElementById("myModal");
-    var modal = new bootstrap.Modal(myModalEl);
-    var helperSlide = document.getElementById("helper_slide");
+    var btnShowHelper = document.getElementById("showHelperBtn");
+    var helperModalEl = document.getElementById("helperModal");
+    var modal = new bootstrap.Modal(helperModalEl);
+    var helperSlide = document.getElementById("helperSlide");
 
     btnShowHelper.addEventListener("click", function () {
       var slideTo = btnShowHelper.dataset.slide;
@@ -51,14 +53,19 @@
             </div>
            `;
           break;
-        case "contact":
+        default:
+          helperSlide.innerHTML = `
+            <div class="carousel-item active">
+               Waiting for content...
+            </div>
+           `;
           break;
       }
 
       modal.show();
     });
 
-    myModalEl.addEventListener("hidden.bs.modal", function () {
+    helperModalEl.addEventListener("hidden.bs.modal", function () {
       console.log("Modal 已關閉");
     });
   });
