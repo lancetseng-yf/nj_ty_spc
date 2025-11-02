@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const dateToEl = document.getElementById("datetimeTo");
   const submitSnBtn = document.getElementById("snSearchBtn");
   const snEl = document.getElementById("snInput");
+  const showHelperBtn = document.getElementById("showHelperBtn");
 
   // =========================
   // 🔹 State
@@ -39,6 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
     factor45: 45,
     factor65: 65,
   };
+
+  showHelperBtn.dataset.slide = "pps-single"
 
   // =========================
   // 🔹 Utilities
