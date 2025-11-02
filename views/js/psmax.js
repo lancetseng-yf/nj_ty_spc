@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const dateFromEl = document.getElementById("datetimeFrom");
   const dateToEl = document.getElementById("datetimeTo");
   const applyLimitsBtn = document.getElementById("applyLimitsBtn");
+  const showHelperBtn = document.getElementById("showHelperBtn");
+
+  showHelperBtn.dataset.slide = "psmax";
 
   let chart, slider, rangeLabel, statsTableBody;
   let scatterData = [];
@@ -145,9 +148,9 @@ document.addEventListener("DOMContentLoaded", () => {
     slider.noUiSlider.on("update", () => {
       const [from, to] = slider.noUiSlider.get().map(Number);
       if (rangeLabel)
-        rangeLabel.textContent = `${i18nLabels.time}: ${formatTime(from)} ~ ${formatTime(
-          to
-        )}`;
+        rangeLabel.textContent = `${i18nLabels.time}: ${formatTime(
+          from
+        )} ~ ${formatTime(to)}`;
       refreshChart();
     });
 
@@ -213,11 +216,13 @@ document.addEventListener("DOMContentLoaded", () => {
         trigger: "item",
         formatter: (params) => {
           const [timestamp, speed, pressure, id] = params.data;
-          return `<b>${i18nLabels.index}:</b> ${id}<br/><b>時間:</b> ${formatTime(
-            timestamp
-          )}<br/><b>${i18nLabels.max_speed}:</b> ${speed.toFixed(
-            2
-          )}<br/><b>${i18nLabels.max_pressure}:</b> ${pressure.toFixed(2)}`;
+          return `<b>${
+            i18nLabels.index
+          }:</b> ${id}<br/><b>時間:</b> ${formatTime(timestamp)}<br/><b>${
+            i18nLabels.max_speed
+          }:</b> ${speed.toFixed(2)}<br/><b>${
+            i18nLabels.max_pressure
+          }:</b> ${pressure.toFixed(2)}`;
         },
       },
       xAxis: {
@@ -288,14 +293,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const ngCount = total - okCount;
 
     statsTableBody.innerHTML = `
-      <tr><td>${
-        p.productName
-      }</td><td>${i18nLabels.warm_up}</td><td>${ngCount}</td><td>${total}</td><td>${
+      <tr><td>${p.productName}</td><td>${
+      i18nLabels.warm_up
+    }</td><td>${ngCount}</td><td>${total}</td><td>${
       total ? ((ngCount / total) * 100).toFixed(2) + "%" : "0.00%"
     }</td></tr>
-      <tr><td>${
-        p.productName
-      }</td><td>${i18nLabels.normal_production}</td><td>${okCount}</td><td>${total}</td><td>${
+      <tr><td>${p.productName}</td><td>${
+      i18nLabels.normal_production
+    }</td><td>${okCount}</td><td>${total}</td><td>${
       total ? ((okCount / total) * 100).toFixed(2) + "%" : "0.00%"
     }</td></tr>
     `;

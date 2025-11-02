@@ -9,12 +9,15 @@ const refreshIcon = document.getElementById("refreshIcon");
 const submitBtn = document.getElementById("submitBtn");
 const dateFromEl = document.getElementById("datetimeFrom");
 const dateToEl = document.getElementById("datetimeTo");
+const showHelperBtn = document.getElementById("showHelperBtn");
 
 let refreshTime = 105; // seconds
 let timeLeft = refreshTime;
 let countdownInterval;
 let autoRefresh = true;
 const initialType = productSelect.value || "<%= type %>";
+
+showHelperBtn.dataset.slide = "pps-batch"
 
 // --- Utility ---
 function fmtDateYMDHMS(d) {

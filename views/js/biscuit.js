@@ -21,6 +21,8 @@ const datetimeFrom = document.getElementById("datetimeFrom");
 const datetimeTo = document.getElementById("datetimeTo");
 const submitBtn = document.getElementById("submitBtn");
 const clearBtn = document.getElementById("clearBtn");
+const showHelperBtn = document.getElementById("showHelperBtn");
+showHelperBtn.dataset.slide = "biscuit";
 
 // Only assign if not already declared
 if (typeof currentType === "undefined") currentType = "LL";
