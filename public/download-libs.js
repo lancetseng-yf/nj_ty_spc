@@ -51,6 +51,10 @@ const libs = [
     url: "https://fonts.googleapis.com/icon?family=Material+Icons",
     file: "libs/material-icons/material-icons.css",
   },
+  {
+    url: "https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js",
+    file: "libs/ag-grid/ag-grid-community.min.js",
+  }
 ];
 
 function downloadFile(url, file) {
