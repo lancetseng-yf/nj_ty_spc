@@ -36,7 +36,7 @@
   "tooltip_vacuum_pressure_label": "真空度",
   "tooltip_aluminum_melt_temp": "机边炉铝汤温度",
   "time_sec": "时间(秒)",
-  "second":"秒",
+  "second": "秒",
 
   "speed_and_pressure_max_title": "最大速度与最大压力图",
   "speed_and_pressure_max_chart_label": "最大速度与最大压力图",
@@ -51,13 +51,13 @@
   "warm_up": "预热",
   "normal_production": "正常生产",
 
-  
-  "kanban_mode":"看板模式",
-  "clear":"清除",
-  "to":"到",
+  "kanban_mode": "看板模式",
+  "clear": "清除",
+  "from": "从",
+  "to": "到",
 
   "hide_controls": "隐藏控制项",
   "product": "产品",
-  
-   "data_loading":"资料载入中..."
+
+  "data_loading": "资料载入中..."
 }

@@ -1,13 +1,13 @@
 <div class="datetime-range-picker">
   <div class="d-flex align-items-center gap-2">
-    <label for="datetimeFrom">從:</label>
+    <label for="datetimeFrom"><%= __('from') %>:</label>
     <input
       type="text"
       id="datetimeFrom"
       class="form-control"
       placeholder="From"
     />
-    <label for="datetimeTo"><%= __('to') %>到:</label>
+    <label for="datetimeTo"><%= __('to') %>:</label>
     <input type="text" id="datetimeTo" class="form-control" placeholder="To" />
     <button id="submitBtn" type="button" class="btn btn-primary">
       <%= __('query') %>
