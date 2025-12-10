@@ -5,9 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const chart = echarts.init(document.getElementById("chart"));
   const autoCarouselCheckbox = document.getElementById("autoCarouselCheckbox");
   const collapseEl = document.getElementById("datapicker-control");
-  const collapseInstance = new bootstrap.Collapse(collapseEl, {
-    toggle: false,
-  });
+  const collapseInstance = new bootstrap.Collapse(collapseEl, { toggle: false });
 
   const productSelect = document.getElementById("productSelect");
   const prevBtn = document.getElementById("prevBtn");
@@ -21,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const dateToEl = document.getElementById("datetimeTo");
   const submitSnBtn = document.getElementById("snSearchBtn");
   const snEl = document.getElementById("snInput");
-  const showHelperBtn = document.getElementById("showHelperBtn");
 
   // =========================
   // 🔹 State
@@ -35,17 +32,17 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentIndex = 0;
   let currentType = productSelect.value || null;
 
-  const scaleFactors = {
-    factor15: 15,
-    factor45: 45,
-    factor65: 65,
-  };
-
-  showHelperBtn.dataset.slide = "pps-single"
-
   // =========================
   // 🔹 Utilities
   // =========================
+  function minMaxScale(arr) {
+    if (!arr || arr.length === 0) return [];
+    const max = Math.max(...arr);
+    const min = Math.min(...arr);
+    if (max === min) return arr.map(() => 0);
+    return arr.map((v) => (v - min) / (max - min));
+  }
+
   function startCountdown() {
     clearInterval(countdownInterval);
     if (!autoRefresh) return;
@@ -88,78 +85,58 @@ document.addEventListener("DOMContentLoaded", () => {
     const step500 = 1 / 500;
     const step250 = 1 / 250;
 
+    // Normalize all relevant signals (0–1)
     const series500 = [
       {
         name: `${i18nLabels.pressure}`,
         type: "line",
         showSymbol: false,
-        data: (model.pressure || []).map((v, i) => [
-          i * step500,
-          v * scaleFactors.factor15,
-        ]),
+        data: minMaxScale(model.pressure || []).map((v, i) => [i * step500, v]),
       },
       {
         name: `${i18nLabels.position}`,
         type: "line",
         showSymbol: false,
-        data: (model.position || []).map((v, i) => [i * step500, v]),
+        data: minMaxScale(model.position || []).map((v, i) => [i * step500, v]),
       },
       {
         name: `${i18nLabels.speed}`,
         type: "line",
         showSymbol: false,
-        data: (model.speed || []).map((v, i) => [
-          i * step500,
-          v * scaleFactors.factor15,
-        ]),
+        data: minMaxScale(model.speed || []).map((v, i) => [i * step500, v]),
       },
     ];
 
     const series250 = [
       {
-        name: `${i18nLabels.series_servo_valve_control}`,//"伺服阀控制曲线"
+        name: `${i18nLabels.series_servo_valve_control}`, //"伺服阀控制曲线"
         type: "line",
         showSymbol: false,
-        data: (model.control || []).map((v, i) => [
-          i * step250,
-          v * scaleFactors.factor45,
-        ]),
+        data: minMaxScale(model.control || []).map((v, i) => [i * step250, v]),
       },
       {
         name: `${i18nLabels.series_servo_valve_feedback}`,//"伺服阀芯反馈曲线"
         type: "line",
         showSymbol: false,
-        data: (model.feedback || []).map((v, i) => [
-          i * step250,
-          v * scaleFactors.factor45,
-        ]),
+        data: minMaxScale(model.feedback || []).map((v, i) => [i * step250, v]),
       },
       {
-        name: `${i18nLabels.series_storage_pressure_n2}`,  //"儲能n2壓力曲線"
+        name: `${i18nLabels.series_storage_pressure_n2}`, //"儲能n2壓力曲線"
         type: "line",
         showSymbol: false,
-        data: (model.storage_pressure_n2 || []).map((v, i) => [
-          i * step250,
-          v * scaleFactors.factor45,
-        ]),
+        data: minMaxScale(model.storage_pressure_n2 || []).map((v, i) => [i * step250, v]),
       },
       {
-        name: `${i18nLabels.series_pressurization_pressure_n2}`, //"增壓n2壓力曲線"
+        name: `${i18nLabels.series_pressurization_pressure_n2}`,//"增壓n2壓力曲線"
         type: "line",
         showSymbol: false,
-        data: (model.pressurization_pressure_n2 || []).map((v, i) => [
-          i * step250,
-          v * scaleFactors.factor45,
-        ]),
+        data: minMaxScale(model.pressurization_pressure_n2 || []).map((v, i) => [i * step250, v]),
       },
       {
-        name: `${i18nLabels.series_system_pressure}`, //"系統壓力曲線"
+        name: `${i18nLabels.series_system_pressure}`,//"系統壓力曲線"
         type: "line",
         showSymbol: false,
-        data: (model.system_pressure || []).map((v, i) => [
-          i * step250,
-          v * scaleFactors.factor45,
-        ]),
+        data: minMaxScale(model.system_pressure || []).map((v, i) => [i * step250, v]),
       },
     ];
 
@@ -167,9 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
       title: {
         text: `${model.type}_${model.lasercode || "N/A"}_${new Date(
           model.dt
-        ).toLocaleString([], {
-          hour12: false, // ✅ 24-hour format only
-        })}`,
+        ).toLocaleString([], { hour12: false })}`,
         left: "center",
         top: 10,
         textStyle: { fontSize: 24 },
@@ -185,59 +160,18 @@ document.addEventListener("DOMContentLoaded", () => {
         formatter: function (params) {
           const lasercode = model.lasercode || "N/A";
           let time = params[0].data[0];
-          let tooltipText = `
-      <b>${i18nLabels.time}:</b> ${time.toFixed(3)}<br/>
-      <b>${i18nLabels.thickness}:</b> ${model.sm}<br/>
-      <b>${i18nLabels.lasercode}:</b> ${lasercode}<br/>
-    `;
+          let tooltipText = `<b>${i18nLabels.time}:</b> ${time.toFixed(3)} <br/>
+                             <b>${i18nLabels.thickness}:</b> ${model.sm} <br/>
+                             <b>${i18nLabels.lasercode}:</b> ${lasercode}<br/>`;
 
           params.forEach((p) => {
-            let value = p.data[1];
-            // Apply scaling depending on sries name
-            if (
-              [`${i18nLabels.pressure}`, `${i18nLabels.speed}`].includes(
-                p.seriesName
-              )
-            ) {
-              value = value / scaleFactors.factor15;
-            } else if (
-              [
-                // Original: "伺服阀控制曲线",
-                i18nLabels.series_servo_valve_control,
-
-                // Original: "伺服阀芯反馈曲线",
-                i18nLabels.series_servo_valve_feedback,
-
-                // Original: "儲能n2壓力曲線",
-                i18nLabels.series_storage_pressure_n2,
-
-                // Original: "增壓n2壓力曲線",
-                i18nLabels.series_pressurization_pressure_n2,
-
-                // Original: "系統壓力曲線",
-                i18nLabels.series_system_pressure,
-              ].includes(p.seriesName)
-            ) {
-              value = value / scaleFactors.factor45;
-            }
-
             tooltipText += `
-        <span style="display:inline-block;margin-right:5px;
-        border-radius:50%;width:10px;height:10px;
-        background-color:${p.color}"></span>
-        ${p.seriesName}: ${value.toFixed(2)}<br/>
-      `;
+              <span style="display:inline-block;margin-right:5px;
+              border-radius:50%;width:10px;height:10px;
+              background-color:${p.color}"></span>
+              ${p.seriesName}: ${(p.data[1]).toFixed(2)}<br/>
+            `;
           });
-
-          // Add vacuum pressure info
-          for (let i = 1; i <= 8; i++) {
-            tooltipText += `${i18nLabels.tooltip_vacuum_pressure_label}${i}: ${
-              model["vacuum_pressure" + i] ?? "N/A"
-            }<br/>`;
-          }
-
-          // Add aluminum temperature
-          tooltipText += `${i18nLabels.tooltip_aluminum_melt_temp}: ${model.lv ?? "N/A"}<br/>`;
 
           return tooltipText;
         },
@@ -267,7 +201,15 @@ document.addEventListener("DOMContentLoaded", () => {
         nameGap: 50,
         nameTextStyle: { fontSize: 20, fontWeight: "bold" },
       },
-      yAxis: { type: "value", axisLabel: { fontSize: 20 }, min: 0 },
+      yAxis: {
+        type: "value",
+        axisLabel: { fontSize: 20 },
+        min: 0,
+        max: 1,
+        name: "Normalized Value (0–1)",
+        nameGap: 40,
+        nameTextStyle: { fontSize: 18, fontWeight: "bold" },
+      },
       series: [...series500, ...series250],
     };
   }
@@ -293,13 +235,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let url = `/pps/single/data?&type=${type}`;
     if (dateFrom && dateTo) {
-      url += `&dateFrom=${encodeURIComponent(
-        dateFrom
-      )}&dateTo=${encodeURIComponent(dateTo)}`;
+      url += `&dateFrom=${encodeURIComponent(dateFrom)}&dateTo=${encodeURIComponent(dateTo)}`;
     }
-    if (sn) {
-      url += `&sn=${encodeURIComponent(sn)}`;
-    }
+    if (sn) url += `&sn=${encodeURIComponent(sn)}`;
 
     fetch(url)
       .then((res) => res.json())
@@ -345,11 +283,8 @@ document.addEventListener("DOMContentLoaded", () => {
     autoRefresh = !autoRefresh;
     refreshIcon.innerText = autoRefresh ? "pause" : "play_arrow";
 
-    if (autoRefresh) {
-      startCountdown();
-    } else {
-      clearInterval(countdownInterval);
-    }
+    if (autoRefresh) startCountdown();
+    else clearInterval(countdownInterval);
   });
 
   submitBtn.addEventListener("click", (e) => {

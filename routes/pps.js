@@ -13,4 +13,6 @@ router.get("/single/data", ppsController.getSingleData);
 // --- Single Page Route ---
 router.get("/single", ppsController.getSinglePage);
 
+router.get("/single-minmax", ppsController.getSingleMinMaxPage);
+
 module.exports = router;

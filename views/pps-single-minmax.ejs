@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title><%= __('pps_single_title') %></title>
+    <link rel="stylesheet" href="/libs/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/pps-single.css" />
+    <script src="/libs/echarts/echarts.min.js"></script>
+    <!-- Material Icons -->
+    <link rel="stylesheet" href="/libs/material-icons/material-icons.css" />
+    <script src="/libs/bootstrap/bootstrap.bundle.min.js"></script>
+  </head>
+  <body>
+    <h1><%= __('pps_single_chart_label') %> <%- include("partials/_helper-control") %></h1>
+
+    <%- include("partials/loading") %>
+
+    <div id="controls">
+      <%- include("partials/_product-dropbox") %>
+
+      <button id="prevBtn">⬅ <%= __('previous') %></button>
+      <button id="nextBtn"><%= __('next') %> ➡</button>
+      <%- include("partials/_countdown-control") %> <%-
+      include("partials/_auto-carousel-checkbox") %>
+    </div>
+
+    <div id="datapicker-control" class="collapse">
+      <%- include("partials/_datetimepicker") %>
+
+      <div id="sn-control" class="form-group">
+        <label for="snInput"><%= __('lasercode') %>:</label>
+        <input type="text" id="snInput" placeholder="" />
+        <button type="submit" id="snSearchBtn" class="btn">
+          <%= __('query') %>
+        </button>
+      </div>
+    </div>
+
+    <div id="chart"></div>
+
+    <script>
+      var i18nLabels = {
+        time: "<%= __('time') %>",
+        thickness: "<%= __('thickness') %>",
+        index: "<%= __('index') %>",
+        refresh_time_label: "<%= __('refresh_time_label') %>",
+        lasercode: "<%= __('lasercode') %>",
+        pressure: "<%= __('pressure') %>",
+        speed: "<%= __('speed') %>",
+        position: "<%= __('position') %>",
+
+        series_servo_valve_control: "<%= __('series_servo_valve_control') %>",
+        series_servo_valve_feedback: "<%= __('series_servo_valve_feedback') %>",
+        series_storage_pressure_n2: "<%= __('series_storage_pressure_n2') %>",
+        series_pressurization_pressure_n2:
+          "<%= __('series_pressurization_pressure_n2') %>",
+        series_system_pressure: "<%= __('series_system_pressure') %>",
+        tooltip_vacuum_pressure_label:
+          "<%= __('tooltip_vacuum_pressure_label') %>",
+        tooltip_aluminum_melt_temp: "<%= __('tooltip_aluminum_melt_temp') %>",
+        time_sec:"<%= __('time_sec') %>",
+        second:"<%= __('second') %>"
+      };
+    </script>
+
+    <script src="/js/pps-single-minmax.js"></script>
+  </body>
+</html>

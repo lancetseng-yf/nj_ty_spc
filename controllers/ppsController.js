@@ -179,3 +179,9 @@ exports.getSingleData = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+exports.getSingleMinMaxPage = (req, res) => {
+  const typeSelect = req.query.type || "";
+  res.render("pps-single-minmax", { type: typeSelect });
+};
