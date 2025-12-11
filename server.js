@@ -2,7 +2,7 @@
 
 const express = require("express");
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 const sequelize = require("./config/db2");
 const path = require("path");
 const cookieParser = require("cookie-parser");

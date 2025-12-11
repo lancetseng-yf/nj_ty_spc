@@ -13,7 +13,9 @@ function i18nMiddleware(req, res, next) {
   i18n.init(req, res);
 
   const userLang =
-    req.cookies?.locale || req.acceptsLanguages(i18n.getLocales()) || "en";
+    (req.cookies && req.cookies.locale) ||
+    req.acceptsLanguages(i18n.getLocales()) ||
+    "en";
   i18n.setLocale(req, userLang);
 
   res.locals.__ = res.__;

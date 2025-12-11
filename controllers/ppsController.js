@@ -23,10 +23,10 @@ function normalizeArray(arr, multiplier = 1) {
 function labelType(lasercode) {
   if (!lasercode || typeof lasercode !== "string") return "";
   const codePart = lasercode.slice(2, 11);
-  return (
-    Object.entries(CODE_MAP).find(([label, code]) => code === codePart)?.[0] ||
-    ""
+  const entry = Object.entries(CODE_MAP).find(
+    ([label, code]) => code === codePart
   );
+  return (entry && entry[0]) || "";
 }
 
 function getLaserCode(label) {
@@ -69,7 +69,7 @@ function mapDbItemToModel(item, rawModel) {
     pressure: normalizeArray(rawPressure, 1),
     position: rawPosition,
     speed: normalizeArray(rawSpeed, 1),
-    sm: item.sm ?? 0,
+    sm: item.sm != null ? item.sm : 0,
     dt: item.create_time,
     create_time: item.create_time,
     type: typeLabel,
@@ -80,15 +80,15 @@ function mapDbItemToModel(item, rawModel) {
     storage_pressure_n2: normalizeArray(rawStoragePressureN2, 1),
     pressurization_pressure_n2: normalizeArray(rawPressurizationPressureN2, 1),
     system_pressure: normalizeArray(rawSystemPressure, 1),
-    vacuum_pressure1: item.vacuum_pressure1 ?? 0,
-    vacuum_pressure2: item.vacuum_pressure2 ?? 0,
-    vacuum_pressure3: item.vacuum_pressure3 ?? 0,
-    vacuum_pressure4: item.vacuum_pressure4 ?? 0,
-    vacuum_pressure5: item.vacuum_pressure5 ?? 0,
-    vacuum_pressure6: item.vacuum_pressure6 ?? 0,
-    vacuum_pressure7: item.vacuum_pressure7 ?? 0,
-    vacuum_pressure8: item.vacuum_pressure8 ?? 0,
-    lv: item.lv ?? 0,
+    vacuum_pressure1: item.vacuum_pressure1 != null ? item.vacuum_pressure1 : 0,
+    vacuum_pressure2: item.vacuum_pressure2 != null ? item.vacuum_pressure2 : 0,
+    vacuum_pressure3: item.vacuum_pressure3 != null ? item.vacuum_pressure3 : 0,
+    vacuum_pressure4: item.vacuum_pressure4 != null ? item.vacuum_pressure4 : 0,
+    vacuum_pressure5: item.vacuum_pressure5 != null ? item.vacuum_pressure5 : 0,
+    vacuum_pressure6: item.vacuum_pressure6 != null ? item.vacuum_pressure6 : 0,
+    vacuum_pressure7: item.vacuum_pressure7 != null ? item.vacuum_pressure7 : 0,
+    vacuum_pressure8: item.vacuum_pressure8 != null ? item.vacuum_pressure8 : 0,
+    lv: item.lv != null ? item.lv : 0,
     lasercode: item.lasercode || "",
   };
 }
@@ -179,7 +179,6 @@ exports.getSingleData = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 exports.getSingleMinMaxPage = (req, res) => {
   const typeSelect = req.query.type || "";

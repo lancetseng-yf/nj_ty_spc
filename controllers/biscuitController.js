@@ -1,6 +1,6 @@
 const DiecastingEigenvalueData = require("../models/diecasting_eigenvalue_data");
 const modelJson = require("../models/biscuit_thick_model.json");
-const { Op, literal  } = require("sequelize");
+const { Op, literal } = require("sequelize");
 const { parse, isValid } = require("date-fns");
 
 // --- Code mapping ---
@@ -20,17 +20,17 @@ function getLaserCode(label) {
 function labelType(lasercode) {
   if (!lasercode || typeof lasercode !== "string") return "";
   const codePart = lasercode.slice(2, 11);
-  return (
-    Object.entries(CODE_MAP).find(([label, code]) => code === codePart)?.[0] ||
-    ""
+  const entry = Object.entries(CODE_MAP).find(
+    ([label, code]) => code === codePart
   );
+  return (entry && entry[0]) || "";
 }
 
 function mapDbItemToModel(item, rawModel) {
   return {
     ...rawModel,
     diecasting_eigenvalue_data_id: item.diecasting_eigenvalue_data_id,
-    sm: item.sm ?? 0,
+    sm: item.sm != null ? item.sm : 0,
     dt: item.create_time,
     type: labelType(item.lasercode || ""),
   };
@@ -53,9 +53,9 @@ exports.getBiscuitData = async (req, res) => {
 
     if (dateFrom && dateTo) {
       // 使用 date-fns.parse 精確解析日期字串
-       
+
       whereClause.create_time = {
-      [Op.between]: [literal(`'${dateFrom}'`), literal(`'${dateTo}'`)]
+        [Op.between]: [literal(`'${dateFrom}'`), literal(`'${dateTo}'`)],
       };
     }
 

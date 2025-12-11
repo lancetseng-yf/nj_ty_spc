@@ -18,10 +18,10 @@ function getLaserCode(label) {
 function labelType(lasercode) {
   if (!lasercode || typeof lasercode !== "string") return "";
   const codePart = lasercode.slice(2, 11);
-  return (
-    Object.entries(CODE_MAP).find(([label, code]) => code === codePart)?.[0] ||
-    ""
+  const entry = Object.entries(CODE_MAP).find(
+    ([label, code]) => code === codePart
   );
+  return (entry && entry[0]) || "";
 }
 
 function convertStringToArray(inputString) {
@@ -87,46 +87,47 @@ function mapDbItemToModel(item, rawModel) {
     system_pressure: normalizeArray(rawSystemPressure, 1),
 
     // Shot Phase Parameters (Slow/High Speed)
-    c1: item.c1 ?? 0,
-    t1: item.t1 ?? 0,
-    v1: item.v1 ?? 0,
-    gp: item.gp ?? 0,
-    c2: item.c2 ?? 0,
-    t2: item.t2 ?? 0,
-    v2: item.v2 ?? 0,
-    vm: item.vm ?? 0,
+    // Shot Phase Parameters (Slow/High Speed)
+    c1: item.c1 != null ? item.c1 : 0,
+    t1: item.t1 != null ? item.t1 : 0,
+    v1: item.v1 != null ? item.v1 : 0,
+    gp: item.gp != null ? item.gp : 0,
+    c2: item.c2 != null ? item.c2 : 0,
+    t2: item.t2 != null ? item.t2 : 0,
+    v2: item.v2 != null ? item.v2 : 0,
+    vm: item.vm != null ? item.vm : 0,
 
     // Intensification/Pressure Parameters
-    cc: item.cc ?? 0,
-    t3: item.t3 ?? 0,
-    td: item.td ?? 0,
-    pm: item.pm ?? 0,
-    pf: item.pf ?? 0,
-    pr: item.pr ?? 0,
-    ps: item.ps ?? 0,
+    cc: item.cc != null ? item.cc : 0,
+    t3: item.t3 != null ? item.t3 : 0,
+    td: item.td != null ? item.td : 0,
+    pm: item.pm != null ? item.pm : 0,
+    pf: item.pf != null ? item.pf : 0,
+    pr: item.pr != null ? item.pr : 0,
+    ps: item.ps != null ? item.ps : 0,
 
     // Final Product/Process Parameters
-    va: item.va ?? 0,
-    fc: item.fc ?? 0,
-    sm: item.sm ?? 0, // Already mapped in original snippet, keeping for completeness
-    tc: item.tc ?? 0,
-    tp: item.tp ?? 0,
-    se: item.se ?? 0,
-    qt: item.qt ?? 0,
-    vacuum_pressure: item.vacuum_pressure ?? 0,
-    tpt: item.tpt ?? 0,
-    lv: item.lv ?? 0,
-    shot_position: item.shot_position ?? 0,
+    va: item.va != null ? item.va : 0,
+    fc: item.fc != null ? item.fc : 0,
+    sm: item.sm != null ? item.sm : 0, // Already mapped in original snippet, keeping for completeness
+    tc: item.tc != null ? item.tc : 0,
+    tp: item.tp != null ? item.tp : 0,
+    se: item.se != null ? item.se : 0,
+    qt: item.qt != null ? item.qt : 0,
+    vacuum_pressure: item.vacuum_pressure != null ? item.vacuum_pressure : 0,
+    tpt: item.tpt != null ? item.tpt : 0,
+    lv: item.lv != null ? item.lv : 0,
+    shot_position: item.shot_position != null ? item.shot_position : 0,
 
     // Vacuum Multiples
-    vacuum_pressure1: item.vacuum_pressure1 ?? 0,
-    vacuum_pressure2: item.vacuum_pressure2 ?? 0,
-    vacuum_pressure3: item.vacuum_pressure3 ?? 0,
-    vacuum_pressure4: item.vacuum_pressure4 ?? 0,
-    vacuum_pressure5: item.vacuum_pressure5 ?? 0,
-    vacuum_pressure6: item.vacuum_pressure6 ?? 0,
-    vacuum_pressure7: item.vacuum_pressure7 ?? 0,
-    vacuum_pressure8: item.vacuum_pressure8 ?? 0,
+    vacuum_pressure1: item.vacuum_pressure1 != null ? item.vacuum_pressure1 : 0,
+    vacuum_pressure2: item.vacuum_pressure2 != null ? item.vacuum_pressure2 : 0,
+    vacuum_pressure3: item.vacuum_pressure3 != null ? item.vacuum_pressure3 : 0,
+    vacuum_pressure4: item.vacuum_pressure4 != null ? item.vacuum_pressure4 : 0,
+    vacuum_pressure5: item.vacuum_pressure5 != null ? item.vacuum_pressure5 : 0,
+    vacuum_pressure6: item.vacuum_pressure6 != null ? item.vacuum_pressure6 : 0,
+    vacuum_pressure7: item.vacuum_pressure7 != null ? item.vacuum_pressure7 : 0,
+    vacuum_pressure8: item.vacuum_pressure8 != null ? item.vacuum_pressure8 : 0,
   };
 }
 

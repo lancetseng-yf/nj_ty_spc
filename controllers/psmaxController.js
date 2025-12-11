@@ -1,6 +1,6 @@
 const DiecastingEigenvalueData = require("../models/diecasting_eigenvalue_data");
 const modelJson = require("../models/psmax_model.json");
-const { Op, literal  } = require("sequelize");
+const { Op, literal } = require("sequelize");
 
 // --- Utility Functions & Code Mapping ---
 const CODE_MAP = {
@@ -29,10 +29,10 @@ function safeMax(arr) {
 function labelType(lasercode) {
   if (!lasercode || typeof lasercode !== "string") return "";
   const codePart = lasercode.slice(2, 11);
-  return (
-    Object.entries(CODE_MAP).find(([label, code]) => code === codePart)?.[0] ||
-    ""
+  const entry = Object.entries(CODE_MAP).find(
+    ([label, code]) => code === codePart
   );
+  return (entry && entry[0]) || "";
 }
 
 function mapDbItemToModel(item, rawModel) {
@@ -63,7 +63,7 @@ async function fetchPsmaxData(type, dateFrom = null, dateTo = null) {
 
     if (dateFrom && dateTo) {
       whereClause.dt = {
-       [Op.between]: [literal(`'${dateFrom}'`), literal(`'${dateTo}'`)]
+        [Op.between]: [literal(`'${dateFrom}'`), literal(`'${dateTo}'`)],
       };
     }
 
