@@ -5,8 +5,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const sequelize = require("./config/db2");
 const path = require("path");
-const cookieParser = require('cookie-parser');
-const { i18nMiddleware } = require('./middlewares/i18n');
+const cookieParser = require("cookie-parser");
+const { i18nMiddleware } = require("./middlewares/i18n");
 
 // --- EJS setup ---
 app.set("view engine", "ejs");
@@ -24,7 +24,6 @@ app.use(express.static("public"));
 app.use("/", require("./routes/index"));
 app.use("/pps", require("./routes/pps"));
 app.use("/psmax", require("./routes/psmax"));
-app.use("/bmw-kanban", require("./routes/bmw-kanban"));
 app.use("/biscuit", require("./routes/biscuit"));
 app.use("/diecasting-report", require("./routes/diecasting-report"));
 
